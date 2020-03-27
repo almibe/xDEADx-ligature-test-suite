@@ -15,7 +15,6 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
     return {
         "Create and close store" {
             val store = creationFunction()
-            store.details() shouldBe mapOf("location" to "memory")
             store.allCollections().toList() shouldBe listOf<Entity>()
             store.close()
         }
@@ -108,13 +107,13 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val collection = store.createCollection(Entity("test"))
             collection shouldNotBe null
             val tx = collection.writeTx()
-            tx.addStatement(Statement(tx.newEntity(), tx.newEntity(), tx.newEntity(), tx.newEntity()))
-            tx.addStatement(Statement(tx.newEntity(), tx.newEntity(), tx.newEntity(), tx.newEntity()))
+            tx.addStatement(Statement(tx.newEntity(), a, tx.newEntity(), tx.newEntity()))
+            tx.addStatement(Statement(tx.newEntity(), a, tx.newEntity(), tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.allStatements().toSet() shouldBe setOf(
-                    Statement(Entity("_:1"), Entity("_:2"), Entity("_:3"), Entity("_:4")),
-                    Statement(Entity("_:5"), Entity("_:6"), Entity("_:7"), Entity("_:8")))
+                    Statement(Entity("_:1"), a, Entity("_:2"), Entity("_:3")),
+                    Statement(Entity("_:4"), a, Entity("_:5"), Entity("_:6")))
             readTx.cancel()
         }
 
@@ -125,11 +124,11 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val tx = collection.writeTx()
             tx.addRule(Rule(Entity("This"), a, Entity("test")))
             tx.addRule(Rule(tx.newEntity(), a, Entity("test")))
-            tx.addRule(Rule(Entity("a"), Entity("knows"), Entity("b")))
-            tx.addRule(Rule(Entity("b"), Entity("knows"), Entity("c")))
-            tx.addRule(Rule(Entity("c"), Entity("knows"), Entity("a")))
-            tx.addRule(Rule(Entity("c"), Entity("knows"), Entity("a"))) //dupe
-            tx.addRule(Rule(tx.newEntity(), tx.newEntity(), tx.newEntity()))
+            tx.addRule(Rule(Entity("a"), Predicate("knows"), Entity("b")))
+            tx.addRule(Rule(Entity("b"), Predicate("knows"), Entity("c")))
+            tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a")))
+            tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a"))) //dupe
+            tx.addRule(Rule(tx.newEntity(), a, tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.matchRules().toSet().size shouldBe 6
@@ -156,11 +155,11 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val tx = collection.writeTx()
             tx.addStatement(Statement(Entity("This"), a, Entity("test"), default))
             tx.addStatement(Statement(tx.newEntity(), a, Entity("test"), default))
-            tx.addStatement(Statement(Entity("a"), Entity("knows"), Entity("b"), default))
-            tx.addStatement(Statement(Entity("b"), Entity("knows"), Entity("c"), default))
-            tx.addStatement(Statement(Entity("c"), Entity("knows"), Entity("a"), default))
-            tx.addStatement(Statement(Entity("c"), Entity("knows"), Entity("a"), default)) //dupe
-            tx.addStatement(Statement(tx.newEntity(), tx.newEntity(), tx.newEntity(), tx.newEntity()))
+            tx.addStatement(Statement(Entity("a"), Predicate("knows"), Entity("b"), default))
+            tx.addStatement(Statement(Entity("b"), Predicate("knows"), Entity("c"), default))
+            tx.addStatement(Statement(Entity("c"), Predicate("knows"), Entity("a"), default))
+            tx.addStatement(Statement(Entity("c"), Predicate("knows"), Entity("a"), default)) //dupe
+            tx.addStatement(Statement(tx.newEntity(), a, tx.newEntity(), tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.matchStatements().toSet().size shouldBe 6
@@ -177,8 +176,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                     Statement(Entity("This"), a, Entity("test"), default),
                     Statement(Entity("_:1"), a, Entity("test"), default)
             )
-            readTx.matchStatements(null, null, null, Entity("_:5")).toSet() shouldBe setOf(
-                    Statement(Entity("_:2"), Entity("_:3"), Entity("_:4"), Entity("_:5"))
+            readTx.matchStatements(null, null, null, Entity("_:4")).toSet() shouldBe setOf(
+                    Statement(Entity("_:2"), a, Entity("_:3"), Entity("_:4"))
             )
             readTx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
         }
@@ -188,39 +187,39 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val collection = store.createCollection(Entity("test"))
             collection shouldNotBe null
             val tx = collection.writeTx()
-            tx.addStatement(Statement(Entity("This"), Entity("test"), StringLiteral("aa"), default))
-            tx.addStatement(Statement(Entity("This"), Entity("test"), StringLiteral("bb"), default))
-            tx.addStatement(Statement(Entity("This"), Entity("test"), StringLiteral("cc"), default))
-            tx.addStatement(Statement(Entity("This"), Entity("test"), StringLiteral("cd"), default))
-            tx.addStatement(Statement(tx.newEntity(), Entity("test"), LangLiteral("le test", "fr"), default))
-            tx.addStatement(Statement(tx.newEntity(), Entity("test"), LangLiteral("le test", "en"), default))
-            tx.addStatement(Statement(tx.newEntity(), Entity("test"), LangLiteral("le test2", "fr"), default))
-            tx.addStatement(Statement(tx.newEntity(), Entity("test"), LangLiteral("le test3", "fr"), default))
-            tx.addStatement(Statement(Entity("a"), Entity("test"), LongLiteral(100L), default))
-            tx.addStatement(Statement(Entity("a"), Entity("test2"), LongLiteral(100L), default))
-            tx.addStatement(Statement(Entity("b"), Entity("test"), LongLiteral(1000L), default))
-            tx.addStatement(Statement(Entity("c"), Entity("test"), DoubleLiteral(42.0), default))
-            tx.addStatement(Statement(Entity("c"), Entity("test"), DoubleLiteral(42.0), default)) //dupe
-            tx.addStatement(Statement(Entity("c"), Entity("test"), DoubleLiteral(2.0), default))
-            tx.addStatement(Statement(tx.newEntity(), tx.newEntity(), tx.newEntity(), tx.newEntity()))
+            tx.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("aa"), default))
+            tx.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("bb"), default))
+            tx.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("cc"), default))
+            tx.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("cd"), default))
+            tx.addStatement(Statement(tx.newEntity(), Predicate("test"), LangLiteral("le test", "fr"), default))
+            tx.addStatement(Statement(tx.newEntity(), Predicate("test"), LangLiteral("le test", "en"), default))
+            tx.addStatement(Statement(tx.newEntity(), Predicate("test"), LangLiteral("le test2", "fr"), default))
+            tx.addStatement(Statement(tx.newEntity(), Predicate("test"), LangLiteral("le test3", "fr"), default))
+            tx.addStatement(Statement(Entity("a"), Predicate("test"), LongLiteral(100L), default))
+            tx.addStatement(Statement(Entity("a"), Predicate("test2"), LongLiteral(100L), default))
+            tx.addStatement(Statement(Entity("b"), Predicate("test"), LongLiteral(1000L), default))
+            tx.addStatement(Statement(Entity("c"), Predicate("test"), DoubleLiteral(42.0), default))
+            tx.addStatement(Statement(Entity("c"), Predicate("test"), DoubleLiteral(42.0), default)) //dupe
+            tx.addStatement(Statement(Entity("c"), Predicate("test"), DoubleLiteral(2.0), default))
+            tx.addStatement(Statement(tx.newEntity(), a, tx.newEntity(), tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.matchStatements().toSet().size shouldBe 14
             readTx.matchStatements(null, null, LongLiteral(100L), default).toSet().size shouldBe 2
             readTx.matchStatements(null, null, StringLiteralRange("b", "cc")).toSet() shouldBe setOf(
-                    Statement(Entity("This"), Entity("test"), StringLiteral("bb"), default),
-                    Statement(Entity("This"), Entity("test"), StringLiteral("cc"), default)
+                    Statement(Entity("This"), Predicate("test"), StringLiteral("bb"), default),
+                    Statement(Entity("This"), Predicate("test"), StringLiteral("cc"), default)
             )
             readTx.matchStatements(null, null, LangLiteralRange(LangLiteral("le test", "fr"), LangLiteral("le test2", "fr"))).toSet() shouldBe setOf(
-                    Statement(Entity("_:1"), Entity("test"), LangLiteral("le test", "fr"), default),
-                    Statement(Entity("_:3"), Entity("test"), LangLiteral("le test2", "fr"), default)
+                    Statement(Entity("_:1"), Predicate("test"), LangLiteral("le test", "fr"), default),
+                    Statement(Entity("_:3"), Predicate("test"), LangLiteral("le test2", "fr"), default)
             )
             readTx.matchStatements(null, null, LongLiteralRange(99L, 100L), null).toSet() shouldBe setOf(
-                    Statement(Entity("a"), Entity("test"), LongLiteral(100L), default),
-                    Statement(Entity("a"), Entity("test2"), LongLiteral(100L), default)
+                    Statement(Entity("a"), Predicate("test"), LongLiteral(100L), default),
+                    Statement(Entity("a"), Predicate("test2"), LongLiteral(100L), default)
             )
             readTx.matchStatements(null, null, DoubleLiteralRange(2.1, 42.0), default).toSet() shouldBe setOf(
-                    Statement(Entity("c"), Entity("test"), DoubleLiteral(42.0), default)
+                    Statement(Entity("c"), Predicate("test"), DoubleLiteral(42.0), default)
             )
             readTx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
         }
