@@ -128,7 +128,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             tx.addRule(Rule(Entity("b"), Predicate("knows"), Entity("c")))
             tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a")))
             tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a"))) //dupe
-            tx.addRule(Rule(tx.newEntity(), a, tx.newEntity()))
+            tx.addRule(Rule(tx.newEntity(), Predicate("fortyTwo"), tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.matchRules().toSet().size shouldBe 6
@@ -159,7 +159,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             tx.addStatement(Statement(Entity("b"), Predicate("knows"), Entity("c"), default))
             tx.addStatement(Statement(Entity("c"), Predicate("knows"), Entity("a"), default))
             tx.addStatement(Statement(Entity("c"), Predicate("knows"), Entity("a"), default)) //dupe
-            tx.addStatement(Statement(tx.newEntity(), a, tx.newEntity(), tx.newEntity()))
+            tx.addStatement(Statement(tx.newEntity(), Predicate("fortyTwo"), tx.newEntity(), tx.newEntity()))
             tx.commit()
             val readTx = collection.readTx()
             readTx.matchStatements().toSet().size shouldBe 6
@@ -177,7 +177,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                     Statement(Entity("_:1"), a, Entity("test"), default)
             )
             readTx.matchStatements(null, null, null, Entity("_:4")).toSet() shouldBe setOf(
-                    Statement(Entity("_:2"), a, Entity("_:3"), Entity("_:4"))
+                    Statement(Entity("_:2"), Predicate("fortyTwo"), Entity("_:3"), Entity("_:4"))
             )
             readTx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
         }
