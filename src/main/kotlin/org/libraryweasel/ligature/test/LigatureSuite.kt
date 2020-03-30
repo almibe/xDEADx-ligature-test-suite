@@ -46,7 +46,6 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             collection shouldNotBe null
             val tx = collection.readTx()
             tx.allStatements().toList() shouldBe listOf()
-            tx.allRules().toList() shouldBe listOf()
             tx.cancel()
         }
 
@@ -59,18 +58,6 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             tx.commit()
             val readTx = collection.readTx()
             readTx.allStatements().toList() shouldBe listOf(Statement(Entity("This"), a, Entity("test"), default))
-            readTx.cancel()
-        }
-
-        "adding rules to collections" {
-            val store = creationFunction()
-            val collection = store.createCollection(Entity("test"))
-            collection shouldNotBe null
-            val tx = collection.writeTx()
-            tx.addRule(Rule(Entity("Also"), a, Entity("test")))
-            tx.commit()
-            val readTx = collection.readTx()
-            readTx.allRules().toList() shouldBe listOf(Rule(Entity("Also"), a, Entity("test")))
             readTx.cancel()
         }
 
@@ -88,20 +75,6 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             readTx.cancel()
         }
 
-        "removing rules from collections" {
-            val store = creationFunction()
-            val collection = store.createCollection(Entity("test"))
-            collection shouldNotBe null
-            val tx = collection.writeTx()
-            tx.addRule(Rule(Entity("This"), a, Entity("test")))
-            tx.addRule(Rule(Entity("Also"), a, Entity("test")))
-            tx.removeRule(Rule(Entity("This"), a, Entity("test")))
-            tx.commit()
-            val readTx = collection.readTx()
-            readTx.allRules().toList() shouldBe listOf(Rule(Entity("Also"), a, Entity("test")))
-            readTx.cancel()
-        }
-
         "new entity test" {
             val store = creationFunction()
             val collection = store.createCollection(Entity("test"))
@@ -115,37 +88,6 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                     Statement(Entity("_:1"), a, Entity("_:2"), Entity("_:3")),
                     Statement(Entity("_:4"), a, Entity("_:5"), Entity("_:6")))
             readTx.cancel()
-        }
-
-        "matching rules in collections" {
-            val store = creationFunction()
-            val collection = store.createCollection(Entity("test"))
-            collection shouldNotBe null
-            val tx = collection.writeTx()
-            tx.addRule(Rule(Entity("This"), a, Entity("test")))
-            tx.addRule(Rule(tx.newEntity(), a, Entity("test")))
-            tx.addRule(Rule(Entity("a"), Predicate("knows"), Entity("b")))
-            tx.addRule(Rule(Entity("b"), Predicate("knows"), Entity("c")))
-            tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a")))
-            tx.addRule(Rule(Entity("c"), Predicate("knows"), Entity("a"))) //dupe
-            tx.addRule(Rule(tx.newEntity(), Predicate("fortyTwo"), tx.newEntity()))
-            tx.commit()
-            val readTx = collection.readTx()
-            readTx.matchRules().toSet().size shouldBe 6
-            readTx.matchRules(null, null, null).toSet().size shouldBe 6
-            readTx.matchRules(null, a, null).toSet() shouldBe setOf(
-                    Rule(Entity("This"), a, Entity("test")),
-                    Rule(Entity("_:1"), a, Entity("test"))
-            )
-            readTx.matchRules(null, a, Entity("test")).toSet() shouldBe setOf(
-                    Rule(Entity("This"), a, Entity("test")),
-                    Rule(Entity("_:1"), a, Entity("test"))
-            )
-            readTx.matchRules(null, null, Entity("test")).toSet() shouldBe setOf(
-                    Rule(Entity("This"), a, Entity("test")),
-                    Rule(Entity("_:1"), a, Entity("test"))
-            )
-            readTx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
         }
 
         "matching statements in collections" {
