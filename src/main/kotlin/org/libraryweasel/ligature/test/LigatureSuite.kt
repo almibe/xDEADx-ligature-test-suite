@@ -16,7 +16,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "Create and close store" {
             val store = creationFunction()
             val tx = creationFunction().readTx()
-            tx.allCollections().toList() shouldBe listOf()
+            tx.collections().toList() shouldBe listOf()
             tx.cancel()
             store.close()
         }
@@ -24,8 +24,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "access new collection" {
             val store = creationFunction()
             val tx = store.readTx()
-            tx.collection(Entity("test")) shouldBe null
-            tx.allCollections().toList() shouldBe listOf()
+            tx.collection(CollectionName("test")) shouldBe null
+            tx.collections().toList() shouldBe listOf()
             tx.cancel()
             store.close()
         }
@@ -33,8 +33,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "creating a new collection" {
             val store = creationFunction()
             val tx = store.writeTx()
-            tx.collection(Entity("test")) shouldBe null
-            tx.allCollections().toList() shouldBe listOf(Entity("test"))
+            tx.collection(CollectionName("test")) shouldBe null
+            tx.collections().toList() shouldBe listOf(Entity("test"))
             tx.commit()
             store.close()
         }
@@ -42,11 +42,11 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "access and delete new collection" {
             val store = creationFunction()
             val tx = store.writeTx()
-            tx.collection(Entity("test")) shouldNotBe null
-            tx.allCollections().toList() shouldBe listOf(Entity("test"))
+            tx.collection(CollectionName("test")) shouldNotBe null
+            tx.collections().toList() shouldBe listOf(Entity("test"))
             tx.deleteCollection(Entity("test"))
             tx.deleteCollection(Entity("test2"))
-            tx.allCollections().toList() shouldBe listOf<Entity>()
+            tx.collections().toList() shouldBe listOf<Entity>()
             tx.cancel()
             store.close()
         }
@@ -54,7 +54,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "new collections should be empty" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.allStatements().toList() shouldBe listOf()
             tx.cancel()
@@ -64,12 +64,12 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "adding statements to collections" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.addStatement(Statement(Entity("This"), a, Entity("test"), default))
             tx.commit()
             val readTx = store.readTx()
-            readTx.collection(Entity("test"))!!.allStatements().toList() shouldBe
+            readTx.collection(CollectionName("test"))!!.allStatements().toList() shouldBe
                     listOf(Statement(Entity("This"), a, Entity("test"), default))
             readTx.cancel()
             store.close()
@@ -78,14 +78,14 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "removing statements from collections" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.addStatement(Statement(Entity("This"), a, Entity("test"), default))
             collection.addStatement(Statement(Entity("Also"), a, Entity("test"), default))
             collection.removeStatement(Statement(Entity("This"), a, Entity("test"), default))
             tx.commit()
             val readTx = store.readTx()
-            readTx.collection(Entity("test"))!!.allStatements().toList() shouldBe
+            readTx.collection(CollectionName("test"))!!.allStatements().toList() shouldBe
                     listOf(Statement(Entity("Also"), a, Entity("test"), default))
             readTx.cancel()
             store.close()
@@ -94,13 +94,13 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "new entity test" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.addStatement(Statement(collection.newEntity(), a, collection.newEntity(), collection.newEntity()))
             collection.addStatement(Statement(collection.newEntity(), a, collection.newEntity(), collection.newEntity()))
             tx.commit()
             val readTx = store.readTx()
-            readTx.collection(Entity("test"))!!.allStatements().toSet() shouldBe setOf(
+            readTx.collection(CollectionName("test"))!!.allStatements().toSet() shouldBe setOf(
                     Statement(Entity("_:1"), a, Entity("_:2"), Entity("_:3")),
                     Statement(Entity("_:4"), a, Entity("_:5"), Entity("_:6")))
             readTx.cancel()
@@ -110,7 +110,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "matching statements in collections" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.addStatement(Statement(Entity("This"), a, Entity("test"), default))
             collection.addStatement(Statement(collection.newEntity(), a, Entity("test"), default))
@@ -121,7 +121,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             collection.addStatement(Statement(collection.newEntity(), Predicate("fortyTwo"), collection.newEntity(), collection.newEntity()))
             tx.commit()
             val readTx = store.readTx()
-            val readCollection: CollectionReadTx = readTx.collection(Entity("test"))!!
+            val readCollection: CollectionReadTx = readTx.collection(CollectionName("test"))!!
             readCollection.matchStatements().toSet().size shouldBe 6
             readCollection.matchStatements(null, null, null, default).toSet().size shouldBe 5
             readCollection.matchStatements(null, a, null).toSet() shouldBe setOf(
@@ -146,7 +146,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         "matching statements with literals and ranges in collections" {
             val store = creationFunction()
             val tx = store.writeTx()
-            val collection = tx.collection(Entity("test"))
+            val collection = tx.collection(CollectionName("test"))
             collection shouldNotBe null
             collection.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("aa"), default))
             collection.addStatement(Statement(Entity("This"), Predicate("test"), StringLiteral("bb"), default))
@@ -165,7 +165,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             collection.addStatement(Statement(collection.newEntity(), a, collection.newEntity(), collection.newEntity()))
             tx.commit()
             val readTx = store.readTx()
-            val readCollection = readTx.collection(Entity("test"))!!
+            val readCollection = readTx.collection(CollectionName("test"))!!
             readCollection.matchStatements().toSet().size shouldBe 14
             readCollection.matchStatements(null, null, LongLiteral(100L), default).toSet().size shouldBe 2
             readCollection.matchStatements(null, null, StringLiteralRange("b", "cc")).toSet() shouldBe setOf(
