@@ -44,8 +44,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val tx = store.writeTx()
             tx.collection(CollectionName("test")) shouldNotBe null
             tx.collections().toList() shouldBe listOf(Entity("test"))
-            tx.deleteCollection(Entity("test"))
-            tx.deleteCollection(Entity("test2"))
+            tx.deleteCollection(CollectionName("test"))
+            tx.deleteCollection(CollectionName("test2"))
             tx.collections().toList() shouldBe listOf<Entity>()
             tx.cancel()
             store.close()
