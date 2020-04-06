@@ -6,7 +6,7 @@ package org.libraryweasel.ligature.test
 
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.AbstractStringSpec
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.flow.toSet
 import org.libraryweasel.ligature.*
 
@@ -18,7 +18,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val store = creationFunction()
             store.compute { tx ->
                 tx.collections()
-            }.toList() shouldBe listOf()
+            }.toSet() shouldBe setOf()
             store.close()
         }
 
@@ -29,7 +29,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }
             store.compute { tx ->
                 tx.collections()
-            }.toList() shouldBe listOf(testCollection)
+            }.toSet() shouldBe setOf(testCollection)
             store.close()
         }
 
@@ -40,14 +40,14 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }
             store.compute { tx ->
                 tx.collections()
-            }.toList() shouldBe listOf(testCollection)
+            }.toSet() shouldBe setOf(testCollection)
             store.write { tx ->
                 tx.deleteCollection(testCollection)
                 tx.deleteCollection(CollectionName("test2"))
             }
             store.compute { tx ->
                 tx.collections()
-            }.toList() shouldBe listOf()
+            }.toSet() shouldBe setOf()
             store.close()
         }
 
@@ -58,7 +58,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
-            }.toList() shouldBe listOf()
+            }.toSet() shouldBe setOf()
             store.close()
         }
 
@@ -70,8 +70,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
-            }.toList() shouldBe
-                    listOf(Statement(Entity("This"), a, Entity("test"), default),
+            }.toSet() shouldBe
+                    setOf(Statement(Entity("This"), a, Entity("test"), default),
                            Statement(Entity("This"), a, Entity("test"), Entity("test")))
             store.close()
         }
@@ -85,8 +85,8 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
-            }.toList() shouldBe
-                    listOf(Statement(Entity("Also"), a, Entity("test"), default))
+            }.toSet() shouldBe
+                    setOf(Statement(Entity("Also"), a, Entity("test"), default))
             store.close()
         }
 
