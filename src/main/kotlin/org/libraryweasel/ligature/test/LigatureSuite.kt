@@ -66,11 +66,13 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             val store = creationFunction()
             store.write { tx ->
                 tx.addStatement(testCollection, Statement(Entity("This"), a, Entity("test"), default))
+                tx.addStatement(testCollection, Statement(Entity("This"), a, Entity("test"), Entity("test")))
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
             }.toList() shouldBe
-                    listOf(Statement(Entity("This"), a, Entity("test"), default))
+                    listOf(Statement(Entity("This"), a, Entity("test"), default),
+                           Statement(Entity("This"), a, Entity("test"), Entity("test")))
             store.close()
         }
 
