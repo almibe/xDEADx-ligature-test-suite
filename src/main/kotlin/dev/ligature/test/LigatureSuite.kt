@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.toSet
 import dev.ligature.*
 
 fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> Unit {
-    val testCollection = NamedEntity("test")
+    val testCollection = CollectionName("test")
 
     return {
         "Create and close store" {
@@ -42,7 +42,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }.toSet() shouldBe setOf(testCollection)
             store.write { tx ->
                 tx.deleteCollection(testCollection)
-                tx.deleteCollection(NamedEntity("test2"))
+                tx.deleteCollection(CollectionName("test2"))
             }
             store.compute { tx ->
                 tx.collections()
@@ -119,34 +119,34 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.write { tx ->
                 valjean = tx.newEntity(testCollection)
                 javert = tx.newEntity(testCollection)
-                tx.addStatement(testCollection, Statement(valjean, NamedEntity("nationality"), StringLiteral("French")))
-                tx.addStatement(testCollection, Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601)))
-                tx.addStatement(testCollection, Statement(javert, NamedEntity("nationality"), StringLiteral("French")))
+                tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+                tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+                tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
             }
             store.compute { tx ->
                 tx.matchStatements(testCollection, null, null, StringLiteral("French"))
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
-                            Statement(javert, NamedEntity("nationality"), StringLiteral("French"))
+                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
                 )
                 tx.matchStatements(testCollection, null, null, LongLiteral(24601))
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601))
+                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
                 )
                 tx.matchStatements(testCollection, valjean)
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
-                            Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601))
+                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
                 )
-                tx.matchStatements(testCollection, javert, NamedEntity("nationality"), StringLiteral("French"))
+                tx.matchStatements(testCollection, javert, Predicate("nationality"), StringLiteral("French"))
                         .toSet() shouldBe setOf(
-                            Statement(javert, NamedEntity("nationality"), StringLiteral("French"))
+                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
                 )
                 tx.matchStatements(testCollection, null, null, null)
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
-                            Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601)),
-                            Statement(javert, NamedEntity("nationality"), StringLiteral("French"))
+                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
+                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
                 )
             }
             store.close()
@@ -161,27 +161,27 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 valjean = tx.newEntity(testCollection)
                 javert = tx.newEntity(testCollection)
                 trout = tx.newEntity(testCollection)
-                tx.addStatement(testCollection, Statement(valjean, NamedEntity("nationality"), StringLiteral("French")))
-                tx.addStatement(testCollection, Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601)))
-                tx.addStatement(testCollection, Statement(javert, NamedEntity("nationality"), StringLiteral("French")))
-                tx.addStatement(testCollection, Statement(javert, NamedEntity("prisonNumber"), LongLiteral(24602)))
-                tx.addStatement(testCollection, Statement(trout, NamedEntity("nationality"), StringLiteral("American")))
-                tx.addStatement(testCollection, Statement(trout, NamedEntity("prisonNumber"), LongLiteral(24603)))
+                tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+                tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+                tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
+                tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
+                tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
+                tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
             }
             store.compute { tx ->
                 tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
-                            Statement(javert, NamedEntity("nationality"), StringLiteral("French"))
+                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
                 )
                 tx.matchStatements(testCollection, null, null, LongLiteralRange(24601, 24603))
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601)),
-                            Statement(javert, NamedEntity("prisonNumber"), LongLiteral(24602))
+                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
+                            Statement(javert, Predicate("prisonNumber"), LongLiteral(24602))
                 )
                 tx.matchStatements(testCollection, valjean, null, LongLiteralRange(24601, 24603))
                         .toSet() shouldBe setOf(
-                            Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601))
+                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
                 )
             }
             store.close()
