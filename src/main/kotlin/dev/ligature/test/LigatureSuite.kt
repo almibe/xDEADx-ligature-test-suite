@@ -7,10 +7,10 @@ package dev.ligature.test
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.AbstractStringSpec
 import kotlinx.coroutines.flow.toSet
-import org.libraryweasel.ligature.*
+import dev.ligature.*
 
 fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> Unit {
-    val testCollection = CollectionName("test")
+    val testCollection = NamedEntity("test")
 
     return {
         "Create and close store" {
@@ -42,7 +42,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             }.toSet() shouldBe setOf(testCollection)
             store.write { tx ->
                 tx.deleteCollection(testCollection)
-                tx.deleteCollection(CollectionName("test2"))
+                tx.deleteCollection(NamedEntity("test2"))
             }
             store.compute { tx ->
                 tx.collections()
@@ -66,14 +66,14 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.write { tx ->
                 val ent1 = tx.newEntity(testCollection)
                 val ent2 = tx.newEntity(testCollection)
-                tx.addStatement(testCollection, Statement(ent1, a, ent2, default))
-                tx.addStatement(testCollection, Statement(ent1, a, ent2, ent2))
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
-                    setOf(Statement(AnonymousEntity(1), a, AnonymousEntity(2), default),
-                           Statement(AnonymousEntity(1), a, AnonymousEntity(2), AnonymousEntity(2)))
+                    setOf(Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
+                           Statement(AnonymousEntity(1), a, AnonymousEntity(2)))
             store.close()
         }
 
@@ -83,28 +83,28 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 val ent1 = tx.newEntity(testCollection)
                 val ent2 = tx.newEntity(testCollection)
                 val ent3 = tx.newEntity(testCollection)
-                tx.addStatement(testCollection, Statement(ent1, a, ent2, default))
-                tx.addStatement(testCollection, Statement(ent3, a, ent2, default))
-                tx.removeStatement(testCollection, Statement(ent1, a, ent2, default))
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
+                tx.addStatement(testCollection, Statement(ent3, a, ent2))
+                tx.removeStatement(testCollection, Statement(ent1, a, ent2))
             }
             store.compute { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
-                    setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2), default))
+                    setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
             store.close()
         }
 
         "new entity test" {
             val store = creationFunction()
             store.write { tx ->
-                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection), tx.newEntity(testCollection)))
-                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection), tx.newEntity(testCollection)))
+                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
+                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
             }
             store. compute { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe setOf(
-                    Statement(AnonymousEntity(1), a, AnonymousEntity(2), AnonymousEntity(3)),
-                    Statement(AnonymousEntity(4), a, AnonymousEntity(5), AnonymousEntity(6)))
+                    Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
+                    Statement(AnonymousEntity(4), a, AnonymousEntity(5)))
             store.close()
         }
 
@@ -138,11 +138,11 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                             Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
                             Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601))
                 )
-                tx.matchStatements(testCollection, javert, NamedEntity("nationality"), StringLiteral("French"), default)
+                tx.matchStatements(testCollection, javert, NamedEntity("nationality"), StringLiteral("French"))
                         .toSet() shouldBe setOf(
                             Statement(javert, NamedEntity("nationality"), StringLiteral("French"))
                 )
-                tx.matchStatements(testCollection, null, null, null, default)
+                tx.matchStatements(testCollection, null, null, null)
                         .toSet() shouldBe setOf(
                             Statement(valjean, NamedEntity("nationality"), StringLiteral("French")),
                             Statement(valjean, NamedEntity("prisonNumber"), LongLiteral(24601)),

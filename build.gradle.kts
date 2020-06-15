@@ -1,6 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.jvm").version("1.3.70")
-    maven
+    `maven-publish`
 }
 
 project.group = "org.libraryweasel.ligature"
