@@ -109,19 +109,68 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
         }
 
         "removing named entity" {
-            TODO()
+            val store = creationFunction()
+            store.write { tx ->
+                val ent1 = NamedEntity("a")
+                val ent2 = NamedEntity("b")
+                val ent3 = NamedEntity("c")
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
+                tx.addStatement(testCollection, Statement(ent3, a, ent2))
+                tx.addStatement(testCollection, Statement(ent2, a, ent1))
+                tx.removeEntity(testCollection, ent1)
+            }
+            store.compute { tx ->
+                tx.allStatements(testCollection)
+            }.toSet() shouldBe
+                    setOf(Statement(NamedEntity("c"), a, NamedEntity("b")))
+            store.close()
         }
 
         "removing anonymous entity" {
-            TODO()
+            val store = creationFunction()
+            store.write { tx ->
+                val ent1 = tx.newEntity(testCollection)
+                val ent2 = tx.newEntity(testCollection)
+                val ent3 = tx.newEntity(testCollection)
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
+                tx.addStatement(testCollection, Statement(ent3, a, ent2))
+                tx.addStatement(testCollection, Statement(ent2, a, ent1))
+                tx.removeEntity(testCollection, ent1)
+            }
+            store.compute { tx ->
+                tx.allStatements(testCollection)
+            }.toSet() shouldBe
+                    setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
+            store.close()
         }
 
         "removing predicate" {
-            TODO()
+            val store = creationFunction()
+            store.write { tx ->
+                val ent1 = tx.newEntity(testCollection)
+                val ent2 = tx.newEntity(testCollection)
+                val ent3 = tx.newEntity(testCollection)
+                tx.addStatement(testCollection, Statement(ent1, a, ent2))
+                tx.addStatement(testCollection, Statement(ent3, Predicate("test"), ent2))
+                tx.addStatement(testCollection, Statement(ent2, a, ent1))
+                tx.removePredicate(testCollection, a)
+            }
+            store.compute { tx ->
+                tx.allStatements(testCollection)
+            }.toSet() shouldBe
+                    setOf(Statement(AnonymousEntity(3), Predicate("test"), AnonymousEntity(2)))
+            store.close()
         }
 
         "matching against a non-existant collection" {
-            TODO()
+            val store = creationFunction()
+            store.compute { tx ->
+                tx.matchStatements(testCollection, null, null, StringLiteral("French"))
+                    .toSet() shouldBe setOf()
+                tx.matchStatements(testCollection, null, a, null)
+                    .toSet() shouldBe setOf()
+            }
+            store.close()
         }
 
         "matching statements in collections" {
