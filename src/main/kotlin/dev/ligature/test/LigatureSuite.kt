@@ -108,6 +108,18 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.close()
         }
 
+        "removing named entity" {
+            TODO()
+        }
+
+        "removing anonymous entity" {
+            TODO()
+        }
+
+        "removing predicate" {
+            TODO()
+        }
+
         "matching against a non-existant collection" {
             TODO()
         }
