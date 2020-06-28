@@ -11,7 +11,7 @@ import monix.execution.Scheduler.Implicits.global
 import org.scalatest.matchers.should.Matchers
 
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
-  abstract def createStore(): LigatureStore
+  def createStore(): LigatureStore
 
   val testCollection: NamedEntity = NamedEntity("test")
 
