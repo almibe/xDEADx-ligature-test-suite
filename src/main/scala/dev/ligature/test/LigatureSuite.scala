@@ -5,18 +5,27 @@
 package dev.ligature.test
 
 import dev.ligature._
+import monix.eval.Task
+import org.scalatest.flatspec.AnyFlatSpec
+import monix.execution.Scheduler.Implicits.global
+import org.scalatest.matchers.should.Matchers
 
-//fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> Unit {
-//  val testCollection = CollectionName("test")
-//
-//  return {
-//  "Create and close store" {
-//  val store = creationFunction()
-//  store.compute { tx ->
-//  tx.collections()
-//}.toSet() shouldBe setOf()
-//  store.close()
-//}
+abstract class LigatureSuite extends AnyFlatSpec with Matchers {
+  abstract def createStore(): LigatureStore
+
+  val testCollection: NamedEntity = NamedEntity("test")
+
+  it should "Create and close store" in {
+    val store = createStore()
+
+    val c = store.readTx().use( tx => for {
+      c <- Task { tx.collections() }
+    } yield c)
+
+    c.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
+    store.close()
+  }
+}
 //
 //  "creating a new collection" {
 //  val store = creationFunction()
