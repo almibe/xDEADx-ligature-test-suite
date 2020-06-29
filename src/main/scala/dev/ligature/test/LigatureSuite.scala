@@ -5,6 +5,7 @@
 package dev.ligature.test
 
 import dev.ligature._
+import dev.ligature.Ligature.a
 import monix.eval.Task
 import org.scalatest.flatspec.AnyFlatSpec
 import monix.execution.Scheduler.Implicits.global
@@ -68,33 +69,41 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close()
   }
 
-  //  "new collections should be empty" {
-  //  val store = createStore()
-  //  store.write { tx ->
-  //  tx.createCollection(testCollection)
-  //}
-  //  store.compute { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe setOf()
-  //  store.close()
-  //}
-  //
-  //  "adding statements to collections" {
-  //  val store = createStore()
-  //  store.write { tx ->
-  //  val ent1 = tx.newEntity(testCollection)
-  //  val ent2 = tx.newEntity(testCollection)
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //}
-  //  store.compute { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe
-  //  setOf(Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
-  //  Statement(AnonymousEntity(1), a, AnonymousEntity(2)))
-  //  store.close()
-  //}
-  //
+  it should "new collections should be empty" in {
+    val store = createStore()
+
+    store.writeTx().use( tx => for {
+      x <- Task { tx.createCollection(testCollection) }
+    } yield x).runSyncUnsafe()
+
+    val s = store.readTx().use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
+    store.close()
+  }
+
+  "adding statements to collections" {
+    val store = createStore()
+
+    store.writeTx().use( tx => for {
+      ent1 <- Task { tx.newEntity(testCollection) }
+      ent2 <- Task { tx.newEntity(testCollection) }
+      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
+      r <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
+    } yield r).runSyncUnsafe()
+
+    val s = store.readTx().use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+      Set(Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
+            Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)))
+    store.close()
+  }
+
   //  "removing statements from collections" {
   //  val store = createStore()
   //  store.write { tx ->
