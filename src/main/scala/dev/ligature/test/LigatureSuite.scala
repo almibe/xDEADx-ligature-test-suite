@@ -84,14 +84,12 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close()
   }
 
-  "adding statements to collections" {
+  it should "adding statements to collections" in {
     val store = createStore()
 
     store.writeTx().use( tx => for {
-      ent1 <- Task { tx.newEntity(testCollection) }
-      ent2 <- Task { tx.newEntity(testCollection) }
-      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
-      r <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
+      r <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")) }
     } yield r).runSyncUnsafe()
 
     val s = store.readTx().use( tx => for {
@@ -99,35 +97,35 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
-      Set(Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
-            Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)))
+      Set(Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")),
+            Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
   }
 
-  //  "removing statements from collections" {
-  //  val store = createStore()
-  //  store.write { tx ->
-  //  val ent1 = tx.newEntity(testCollection)
-  //  val ent2 = tx.newEntity(testCollection)
-  //  val ent3 = tx.newEntity(testCollection)
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent3, a, ent2))
-  //  tx.removeStatement(testCollection, Statement(ent1, a, ent2))
-  //}
-  //  store.compute { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe
-  //  setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
-  //  store.close()
-  //}
+  it should "removing statements from collections" in {
+    val store = createStore()
+
+    store.writeTx.use( tx => for {
+      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
+      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline"))) }
+      x <- Task { tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
+    } yield x).runSyncUnsafe()
+
+    val s = store.readTx.use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+      Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+    store.close()
+  }
   //
   //  "new entity test" {
   //  val store = createStore()
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
   //  tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
   //}
-  //  store. compute { tx ->
+  //  store. readTx { tx ->
   //  tx.allStatements(testCollection)
   //}.toSet() shouldBe setOf(
   //  Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
@@ -137,7 +135,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //
   //  "removing named entity" {
   //  val store = createStore()
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  val ent1 = NamedEntity("a")
   //  val ent2 = NamedEntity("b")
   //  val ent3 = NamedEntity("c")
@@ -146,7 +144,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
   //  tx.removeEntity(testCollection, ent1)
   //}
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.allStatements(testCollection)
   //}.toSet() shouldBe
   //  setOf(Statement(NamedEntity("c"), a, NamedEntity("b")))
@@ -155,7 +153,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //
   //  "removing anonymous entity" {
   //  val store = createStore()
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  val ent1 = tx.newEntity(testCollection)
   //  val ent2 = tx.newEntity(testCollection)
   //  val ent3 = tx.newEntity(testCollection)
@@ -164,7 +162,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
   //  tx.removeEntity(testCollection, ent1)
   //}
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.allStatements(testCollection)
   //}.toSet() shouldBe
   //  setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
@@ -173,7 +171,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //
   //  "removing predicate" {
   //  val store = createStore()
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  val ent1 = tx.newEntity(testCollection)
   //  val ent2 = tx.newEntity(testCollection)
   //  val ent3 = tx.newEntity(testCollection)
@@ -182,7 +180,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
   //  tx.removePredicate(testCollection, a)
   //}
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.allStatements(testCollection)
   //}.toSet() shouldBe
   //  setOf(Statement(AnonymousEntity(3), Predicate("test"), AnonymousEntity(2)))
@@ -191,7 +189,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //
   //  "matching against a non-existant collection" {
   //  val store = createStore()
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.matchStatements(testCollection, null, null, StringLiteral("French"))
   //  .toSet() shouldBe setOf()
   //  tx.matchStatements(testCollection, null, a, null)
@@ -204,14 +202,14 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  val store = createStore()
   //  lateinit var valjean: Entity
   //  lateinit var javert: Entity
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  valjean = tx.newEntity(testCollection)
   //  javert = tx.newEntity(testCollection)
   //  tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
   //  tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
   //  tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
   //}
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.matchStatements(testCollection, null, null, StringLiteral("French"))
   //  .toSet() shouldBe setOf(
   //  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
@@ -245,7 +243,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  lateinit var valjean: Entity
   //  lateinit var javert: Entity
   //  lateinit var trout: Entity
-  //  store.write { tx ->
+  //  store.writeTx( tx ->
   //  valjean = tx.newEntity(testCollection)
   //  javert = tx.newEntity(testCollection)
   //  trout = tx.newEntity(testCollection)
@@ -256,7 +254,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   //  tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
   //  tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
   //}
-  //  store.compute { tx ->
+  //  store.readTx { tx ->
   //  tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
   //  .toSet() shouldBe setOf(
   //  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
