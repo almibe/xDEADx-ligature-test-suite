@@ -118,75 +118,88 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
   }
-  //
-  //  "new entity test" {
-  //  val store = createStore()
-  //  store.writeTx( tx ->
-  //  tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
-  //  tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
-  //}
-  //  store. readTx { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe setOf(
-  //  Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
-  //  Statement(AnonymousEntity(4), a, AnonymousEntity(5)))
-  //  store.close()
-  //}
-  //
-  //  "removing named entity" {
-  //  val store = createStore()
-  //  store.writeTx( tx ->
-  //  val ent1 = NamedEntity("a")
-  //  val ent2 = NamedEntity("b")
-  //  val ent3 = NamedEntity("c")
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent3, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
-  //  tx.removeEntity(testCollection, ent1)
-  //}
-  //  store.readTx { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe
-  //  setOf(Statement(NamedEntity("c"), a, NamedEntity("b")))
-  //  store.close()
-  //}
-  //
-  //  "removing anonymous entity" {
-  //  val store = createStore()
-  //  store.writeTx( tx ->
-  //  val ent1 = tx.newEntity(testCollection)
-  //  val ent2 = tx.newEntity(testCollection)
-  //  val ent3 = tx.newEntity(testCollection)
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent3, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
-  //  tx.removeEntity(testCollection, ent1)
-  //}
-  //  store.readTx { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe
-  //  setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
-  //  store.close()
-  //}
-  //
-  //  "removing predicate" {
-  //  val store = createStore()
-  //  store.writeTx( tx ->
-  //  val ent1 = tx.newEntity(testCollection)
-  //  val ent2 = tx.newEntity(testCollection)
-  //  val ent3 = tx.newEntity(testCollection)
-  //  tx.addStatement(testCollection, Statement(ent1, a, ent2))
-  //  tx.addStatement(testCollection, Statement(ent3, Predicate("test"), ent2))
-  //  tx.addStatement(testCollection, Statement(ent2, a, ent1))
-  //  tx.removePredicate(testCollection, a)
-  //}
-  //  store.readTx { tx ->
-  //  tx.allStatements(testCollection)
-  //}.toSet() shouldBe
-  //  setOf(Statement(AnonymousEntity(3), Predicate("test"), AnonymousEntity(2)))
-  //  store.close()
-  //}
-  //
+
+  it should "new entity test" in {
+    val store = createStore()
+
+    store.writeTx.use( tx => for {
+      _ <- Task { tx.addStatement(testCollection, Statement(tx.newEntity(testCollection).get, Ligature.a, tx.newEntity(testCollection).get)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(tx.newEntity(testCollection).get, Ligature.a, tx.newEntity(testCollection).get)) }
+    } yield ()).runSyncUnsafe()
+
+    val s = store.readTx.use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(
+      Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
+      Statement(AnonymousEntity(4), Ligature.a, AnonymousEntity(5)))
+    store.close()
+  }
+
+  it should "removing named entity" in {
+    val store = createStore()
+    val entA = NamedEntity("a")
+    val entB = NamedEntity("b")
+    val entC = NamedEntity("c")
+
+    store.writeTx.use( tx => for {
+      _ <- Task { tx.addStatement(testCollection, Statement(entA, Ligature.a, entB)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(entB, Ligature.a, entA)) }
+      _ <- Task { tx.removeEntity(testCollection, entA) }
+    } yield ()).runSyncUnsafe()
+
+    val s = store.readTx.use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+      Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
+    store.close()
+  }
+
+  it should "removing anonymous entity" in {
+    val store = createStore()
+
+    store.writeTx.use( tx => for {
+      ent1 <- Task { tx.newEntity(testCollection) }
+      ent2 <- Task { tx.newEntity(testCollection) }
+      ent3 <- Task { tx.newEntity(testCollection) }
+      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get)) }
+      _ <- Task { tx.removeEntity(testCollection, ent1.get) }
+    } yield ())
+
+    val s = store.readTx.use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+      Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
+    store.close()
+  }
+
+  it should "removing predicate" in {
+    val store = createStore()
+    val namedA = NamedEntity(Ligature.a.identifier)
+    store.writeTx.use( tx => for {
+      ent1 <- Task { tx.newEntity(testCollection) }
+      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test"))) }
+      _ <- Task { tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA)) }
+      _ <- Task { tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get)) }
+      _ <- Task { tx.removePredicate(testCollection, Ligature.a) }
+    } yield ()).runSyncUnsafe()
+
+    val s = store.readTx.use( tx => for {
+      s <- Task { tx.allStatements(testCollection) }
+    } yield s)
+
+    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+      Set(Statement(namedA, Predicate("test"), namedA))
+    store.close()
+  }
+
   //  "matching against a non-existant collection" {
   //  val store = createStore()
   //  store.readTx { tx ->
