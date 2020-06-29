@@ -20,7 +20,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     val c = store.readTx().use( tx => for {
-      c <- Task { tx.collections() }
+      c <- tx.collections()
     } yield c)
 
     c.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
@@ -31,11 +31,11 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx().use( tx => for {
-      x <- Task { tx.createCollection(testCollection) }
+      x <- tx.createCollection(testCollection)
     } yield x).runSyncUnsafe()
 
     val c = store.readTx().use( tx => for {
-      c <- Task { tx.collections() }
+      c <- tx.collections()
     } yield c)
 
     c.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(testCollection)
@@ -46,22 +46,22 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx().use( tx => for {
-      x <- Task { tx.createCollection(testCollection) }
+      x <- tx.createCollection(testCollection)
     } yield x).runSyncUnsafe()
 
     val c = store.readTx().use( tx => for {
-      c <- Task { tx.collections() }
+      c <- tx.collections()
     } yield c)
 
     c.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(testCollection)
 
     store.writeTx().use( tx => for {
-      x <- Task { tx.deleteCollection(testCollection) }
-      _ <- Task { tx.deleteCollection(NamedEntity("Test2") )}
+      x <- tx.deleteCollection(testCollection)
+      _ <- tx.deleteCollection(NamedEntity("Test2"))
     } yield x).runSyncUnsafe()
 
     val c2 = store.readTx().use( tx => for {
-      c <- Task { tx.collections() }
+      c <- tx.collections()
     } yield c)
 
     c2.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
@@ -73,11 +73,11 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx().use( tx => for {
-      x <- Task { tx.createCollection(testCollection) }
+      x <- tx.createCollection(testCollection)
     } yield x).runSyncUnsafe()
 
     val s = store.readTx().use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
@@ -88,12 +88,12 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx().use( tx => for {
-      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
-      r <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")) }
+      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
+      r <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     } yield r).runSyncUnsafe()
 
     val s = store.readTx().use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
@@ -106,13 +106,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx.use( tx => for {
-      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
-      _ <- Task { tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline"))) }
-      x <- Task { tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human"))) }
+      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
+      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+      x <- tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
     } yield x).runSyncUnsafe()
 
     val s = store.readTx.use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
       Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
@@ -123,12 +123,16 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx.use( tx => for {
-      _ <- Task { tx.addStatement(testCollection, Statement(tx.newEntity(testCollection).get, Ligature.a, tx.newEntity(testCollection).get)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(tx.newEntity(testCollection).get, Ligature.a, tx.newEntity(testCollection).get)) }
+      e1 <- tx.newEntity(testCollection)
+      e2 <- tx.newEntity(testCollection)
+      e3 <- tx.newEntity(testCollection)
+      e4 <- tx.newEntity(testCollection)
+      _ <- tx.addStatement(testCollection, Statement(e1.get, Ligature.a, e2.get))
+      _ <- tx.addStatement(testCollection, Statement(e3.get, Ligature.a, e4.get))
     } yield ()).runSyncUnsafe()
 
     val s = store.readTx.use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(
       Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
@@ -143,14 +147,14 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val entC = NamedEntity("c")
 
     store.writeTx.use( tx => for {
-      _ <- Task { tx.addStatement(testCollection, Statement(entA, Ligature.a, entB)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(entB, Ligature.a, entA)) }
-      _ <- Task { tx.removeEntity(testCollection, entA) }
+      _ <- tx.addStatement(testCollection, Statement(entA, Ligature.a, entB))
+      _ <- tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB))
+      _ <- tx.addStatement(testCollection, Statement(entB, Ligature.a, entA))
+      _ <- tx.removeEntity(testCollection, entA)
     } yield ()).runSyncUnsafe()
 
     val s = store.readTx.use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
@@ -162,17 +166,17 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.writeTx.use( tx => for {
-      ent1 <- Task { tx.newEntity(testCollection) }
-      ent2 <- Task { tx.newEntity(testCollection) }
-      ent3 <- Task { tx.newEntity(testCollection) }
-      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get)) }
-      _ <- Task { tx.removeEntity(testCollection, ent1.get) }
+      ent1 <- tx.newEntity(testCollection)
+      ent2 <- tx.newEntity(testCollection)
+      ent3 <- tx.newEntity(testCollection)
+      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get))
+      _ <- tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get))
+      _ <- tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get))
+      _ <- tx.removeEntity(testCollection, ent1.get)
     } yield ())
 
     val s = store.readTx.use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
@@ -184,15 +188,15 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
     val namedA = NamedEntity(Ligature.a.identifier)
     store.writeTx.use( tx => for {
-      ent1 <- Task { tx.newEntity(testCollection) }
-      _ <- Task { tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test"))) }
-      _ <- Task { tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA)) }
-      _ <- Task { tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get)) }
-      _ <- Task { tx.removePredicate(testCollection, Ligature.a) }
+      ent1 <- tx.newEntity(testCollection)
+      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test")))
+      _ <- tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA))
+      _ <- tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get))
+      _ <- tx.removePredicate(testCollection, Ligature.a)
     } yield ()).runSyncUnsafe()
 
     val s = store.readTx.use( tx => for {
-      s <- Task { tx.allStatements(testCollection) }
+      s <- tx.allStatements(testCollection)
     } yield s)
 
     s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
