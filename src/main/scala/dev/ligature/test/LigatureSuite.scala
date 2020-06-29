@@ -41,24 +41,33 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close()
   }
 
-  //  "access and delete new collection" {
-  //  val store = createStore()
-  //  store.write { tx ->
-  //  tx.createCollection(testCollection)
-  //}
-  //  store.compute { tx ->
-  //  tx.collections()
-  //}.toSet() shouldBe setOf(testCollection)
-  //  store.write { tx ->
-  //  tx.deleteCollection(testCollection)
-  //  tx.deleteCollection(CollectionName("test2"))
-  //}
-  //  store.compute { tx ->
-  //  tx.collections()
-  //}.toSet() shouldBe setOf()
-  //  store.close()
-  //}
-  //
+  it should "access and delete new collection" in {
+    val store = createStore()
+
+    store.writeTx().use( tx => for {
+      x <- Task { tx.createCollection(testCollection) }
+    } yield x).runSyncUnsafe()
+
+    val c = store.readTx().use( tx => for {
+      c <- Task { tx.collections() }
+    } yield c)
+
+    c.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(testCollection)
+
+    store.writeTx().use( tx => for {
+      x <- Task { tx.deleteCollection(testCollection) }
+      _ <- Task { tx.deleteCollection(NamedEntity("Test2") )}
+    } yield x).runSyncUnsafe()
+
+    val c2 = store.readTx().use( tx => for {
+      c <- Task { tx.collections() }
+    } yield c)
+
+    c2.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set()
+
+    store.close()
+  }
+
   //  "new collections should be empty" {
   //  val store = createStore()
   //  store.write { tx ->
