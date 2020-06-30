@@ -96,7 +96,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe
       Set(Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")),
             Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
@@ -114,7 +114,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val s = store.readTx.use( tx => for {
       s <- tx.allStatements(testCollection)
     } yield s)
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe
       Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
   }
@@ -134,9 +134,9 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val s = store.readTx.use( tx => for {
       s <- tx.allStatements(testCollection)
     } yield s)
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe Set(
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe Set(
       Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
-      Statement(AnonymousEntity(4), Ligature.a, AnonymousEntity(5)))
+      Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(4)))
     store.close()
   }
 
@@ -157,7 +157,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe
       Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
     store.close()
   }
@@ -179,7 +179,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe
       Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
     store.close()
   }
@@ -199,7 +199,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.runSyncUnsafe().toListL.runSyncUnsafe().toSet shouldBe
+    s.runSyncUnsafe().toListL.runSyncUnsafe().map(_.statement).toSet shouldBe
       Set(Statement(namedA, Predicate("test"), namedA))
     store.close()
   }
