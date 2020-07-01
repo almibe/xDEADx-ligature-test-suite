@@ -256,52 +256,35 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close()
   }
 
-  //  "matching statements with literals and ranges in collections" {
-  //  val store = createStore()
-  //  lateinit var valjean: Entity
-  //  lateinit var javert: Entity
-  //  lateinit var trout: Entity
-  //  store.writeTx( tx ->
-  //  valjean = tx.newEntity(testCollection)
-  //  javert = tx.newEntity(testCollection)
-  //  trout = tx.newEntity(testCollection)
-  //  tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-  //  tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-  //  tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
-  //  tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
-  //  tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
-  //  tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
-  //}
-  //  store.readTx { tx ->
-  //  tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
-  //  .toSet() shouldBe setOf(
-  //  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-  //  Statement(javert, Predicate("nationality"), StringLiteral("French"))
-  //  )
-  //  tx.matchStatements(testCollection, null, null, LongLiteralRange(24601, 24603))
-  //  .toSet() shouldBe setOf(
-  //  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
-  //  Statement(javert, Predicate("prisonNumber"), LongLiteral(24602))
-  //  )
-  //  tx.matchStatements(testCollection, valjean, null, LongLiteralRange(24601, 24603))
-  //  .toSet() shouldBe setOf(
-  //  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
-  //  )
-  //}
-  //  store.close()
-  //}
-  //
-  //  //    "matching statements with collection literals in collections" {
-  //  //        val store = createStore()
-  //  //        val collection = store.createCollection(NamedEntity("test"))
-  //  //        collection shouldNotBe null
-  //  //        val tx = collection.writeTx()
-  //  //        TODO("Add values")
-  //  //        tx.commit()
-  //  //        val tx = collection.tx()
-  //  //        TODO("Add assertions")
-  //  //        tx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
-  //  //    }
-  //}
-  //}
+  it should "matching statements with literals and ranges in collections" in {
+    val store = createStore()
+    val valjean = NamedEntity("valjean")
+    val javert = NamedEntity("javert")
+    val trout = NamedEntity("trout")
+    store.writeTx.use( tx => for {
+      _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+      _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+      _ <- tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
+      _ <- tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
+      _ <- tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
+      _ <- tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
+    } yield ()).runSyncUnsafe()
+
+    val s = store.readTx.use( tx => for {
+      s <- tx.matchStatements(testCollection, None, None, StringLiteralRange("French", "German"))
+      s2 <- tx.matchStatements(testCollection, None, None, LongLiteralRange(24601, 24603))
+      s3 <- tx.matchStatements(testCollection, Some(valjean), None, LongLiteralRange(24601, 24603))
+    } yield (s, s2, s3))
+
+    s.runSyncUnsafe()._1.toListL.runSyncUnsafe().map(_.statement).toSet shouldBe Set(
+      Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+      Statement(javert, Predicate("nationality"), StringLiteral("French")))
+    s.runSyncUnsafe()._2.toListL.runSyncUnsafe().map(_.statement).toSet shouldBe Set(
+      Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
+      Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
+    s.runSyncUnsafe()._3.toListL.runSyncUnsafe().map(_.statement).toSet shouldBe Set(
+      Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+
+    store.close()
+  }
 }
