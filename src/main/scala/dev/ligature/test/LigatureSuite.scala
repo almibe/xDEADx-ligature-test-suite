@@ -5,8 +5,6 @@
 package dev.ligature.test
 
 import dev.ligature._
-import dev.ligature.Ligature.a
-import monix.eval.Task
 import org.scalatest.flatspec.AnyFlatSpec
 import monix.execution.Scheduler.Implicits.global
 import org.scalatest.matchers.should.Matchers
@@ -173,7 +171,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       _ <- tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get))
       _ <- tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get))
       _ <- tx.removeEntity(testCollection, ent1.get)
-    } yield ())
+    } yield ()).runSyncUnsafe()
 
     val s = store.readTx.use( tx => for {
       s <- tx.allStatements(testCollection)
