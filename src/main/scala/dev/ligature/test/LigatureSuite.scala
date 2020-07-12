@@ -4,8 +4,6 @@
 
 package dev.ligature.test
 
-import scala.util.Try
-import cats.effect.IO
 import dev.ligature._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -17,28 +15,26 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
   it should "Create and close store" in {
     val store = createStore()
-    val c: IO[Try[Iterable[NamedEntity]]] = store.compute { tx =>
-      tx.collections()
-    }
-    c.unsafeRunSync().get.toSet shouldBe Set()
+    val c = store.compute().use{ tx => tx.collections() }
+    c.unsafeRunSync().toSet shouldBe Set()
     store.close()
   }
 
   it should "creating a new collection" in {
     val store = createStore()
 
-    store.write { tx =>
+    store.write().use { tx =>
       tx.createCollection(testCollection)
-    }
+    }.unsafeRunSync()
 
-    val c = store.compute { tx =>
+    val c = store.compute.use { tx =>
       tx.collections()
     }
 
-    c.unsafeRunSync().get.toSet shouldBe Set(testCollection)
+    c.unsafeRunSync().toSet shouldBe Set(testCollection)
     store.close()
   }
-//
+
 //  it should "access and delete new collection" in {
 //    val store = createStore()
 //
