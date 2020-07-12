@@ -4,6 +4,7 @@
 
 package dev.ligature.test
 
+import cats.effect.IO
 import dev.ligature._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -231,19 +232,19 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
         Some(Predicate("nationality")),
         Some(StringLiteral("French")))
       s5 <- tx.matchStatements(testCollection, None, None, None)
-    })
+    } yield (s, s2, s3, s4, s5))
 
-    s.unsafeRunSync()._1.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._1.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._2.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._2.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-    s.unsafeRunSync()._3.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._3.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-    s.unsafeRunSync()._4.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._4.toSet.map(_.statement) shouldBe Set(
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._5.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._5.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
@@ -256,6 +257,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val valjean = NamedEntity("valjean")
     val javert = NamedEntity("javert")
     val trout = NamedEntity("trout")
+
     store.write.use( tx => for {
       _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
       _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
@@ -271,13 +273,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s3 <- tx.matchStatements(testCollection, Some(valjean), None, LongLiteralRange(24601, 24603))
     } yield (s, s2, s3))
 
-    s.unsafeRunSync()._1.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._1.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._2.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._2.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
       Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
-    s.unsafeRunSync()._3.toSet.map(_.statement)) shouldBe Set(
+    s.unsafeRunSync()._3.toSet.map(_.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
 
     store.close()
