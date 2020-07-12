@@ -7,9 +7,9 @@ package dev.ligature.test
 import dev.ligature._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import scala.concurrent.duration.Duration
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
 
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   def createStore(): LigatureStore
@@ -18,27 +18,27 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
   it should "Create and close store" in {
     val store = createStore()
-    val c: Future[Iterable[NamedEntity]] = store.readTx { tx =>
+    val c = store.compute { tx =>
       tx.collections()
     }
     Await.result(c, Duration.Inf) shouldBe Set()
     store.close()
   }
 
-//  it should "creating a new collection" in {
-//    val store = createStore()
-//
-//    store.writeTx().use( tx =>
-//      tx.createCollection(testCollection)
-//    ).unsafeRunSync()
-//
-//    val c = store.readTx().use( tx => for {
-//      c <- tx.collections()
-//    } yield c)
-//
-//    Set(c.unsafeRunSync().compile.toList) shouldBe Set(testCollection)
-//    store.close()
-//  }
+  it should "creating a new collection" in {
+    val store = createStore()
+
+    store.write { tx =>
+      tx.createCollection(testCollection)
+    }
+
+    val c = store.compute { tx =>
+      tx.collections()
+    }
+
+    Await.result(c, Duration.Inf) shouldBe Set(testCollection)
+    store.close()
+  }
 //
 //  it should "access and delete new collection" in {
 //    val store = createStore()
