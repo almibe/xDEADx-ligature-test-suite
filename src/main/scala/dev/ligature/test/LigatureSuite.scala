@@ -15,8 +15,8 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
   it should "Create and close store" in {
     val store = createStore()
-    val c = store.compute().use{ tx => tx.collections() }
-    c.unsafeRunSync().toSet shouldBe Set()
+    val c = store.compute().use( tx => tx.collections() )
+    c.unsafeRunSync.toSet shouldBe Set()
     store.close()
   }
 
