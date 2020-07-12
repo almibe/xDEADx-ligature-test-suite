@@ -4,12 +4,11 @@
 
 package dev.ligature.test
 
+import scala.util.Try
+import cats.effect.IO
 import dev.ligature._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.Await
 
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   def createStore(): LigatureStore
@@ -18,10 +17,10 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
   it should "Create and close store" in {
     val store = createStore()
-    val c = store.compute { tx =>
+    val c: IO[Try[Iterable[NamedEntity]]] = store.compute { tx =>
       tx.collections()
     }
-    Await.result(c, Duration.Inf) shouldBe Set()
+    c.unsafeRunSync().get.toSet shouldBe Set()
     store.close()
   }
 
@@ -36,7 +35,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       tx.collections()
     }
 
-    Await.result(c, Duration.Inf) shouldBe Set(testCollection)
+    c.unsafeRunSync().get.toSet shouldBe Set(testCollection)
     store.close()
   }
 //
