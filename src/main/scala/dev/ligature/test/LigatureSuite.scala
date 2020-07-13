@@ -218,11 +218,11 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       val valjean = NamedEntity("valjean")
       val javert = NamedEntity("javert")
 
-      store.write.use( tx =>
-        IO { tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-          tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-          tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
-        }).unsafeRunSync()
+      store.write.use( tx => for {
+        _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+        _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+        _ <- tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
+      } yield ()).unsafeRunSync()
 
     val s = store.compute.use( tx => for {
       s <- tx.matchStatements(testCollection, None, None, Some(StringLiteral("French")))
