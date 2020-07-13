@@ -17,7 +17,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   it should "Create and close store" in {
     val store = createStore()
     val c = store.compute().use( tx => tx.collections() )
-    c.unsafeRunSync.toSet shouldBe Set()
+    c.unsafeRunSync shouldBe Set()
     store.close()
   }
 
@@ -32,7 +32,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       tx.collections()
     }
 
-    c.unsafeRunSync().toSet shouldBe Set(testCollection)
+    c.unsafeRunSync() shouldBe Set(testCollection)
     store.close()
   }
 
@@ -47,7 +47,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       c <- tx.collections()
     } yield c)
 
-    Set(c.unsafeRunSync().toSet) shouldBe Set(testCollection)
+    c.unsafeRunSync() shouldBe Set(testCollection)
 
     store.write().use( tx => for {
       x <- tx.deleteCollection(testCollection)
@@ -58,7 +58,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       c <- tx.collections()
     } yield c)
 
-    Set(c2.unsafeRunSync().toSet) shouldBe Set()
+    c2.unsafeRunSync() shouldBe Set()
 
     store.close()
   }
@@ -74,7 +74,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    Set(s.unsafeRunSync().toSet) shouldBe Set()
+    s.unsafeRunSync() shouldBe Set()
     store.close()
   }
 
@@ -90,7 +90,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")),
             Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
@@ -109,7 +109,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     store.close()
   }
@@ -130,7 +130,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
       Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(4)))
     store.close()
@@ -153,7 +153,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
     store.close()
   }
@@ -175,7 +175,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
     store.close()
   }
@@ -195,7 +195,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s <- tx.allStatements(testCollection)
     } yield s)
 
-    s.unsafeRunSync().toSet.map((ps: PersistedStatement) => ps.statement) shouldBe
+    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(namedA, Predicate("test"), namedA))
     store.close()
   }
@@ -234,17 +234,17 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s5 <- tx.matchStatements(testCollection, None, None, None)
     } yield (s, s2, s3, s4, s5))
 
-    s.unsafeRunSync()._1.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._2.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-    s.unsafeRunSync()._3.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-    s.unsafeRunSync()._4.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._4.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._5.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._5.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
@@ -273,13 +273,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       s3 <- tx.matchStatements(testCollection, Some(valjean), None, LongLiteralRange(24601, 24603))
     } yield (s, s2, s3))
 
-    s.unsafeRunSync()._1.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("nationality"), StringLiteral("French")),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
-    s.unsafeRunSync()._2.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
       Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
-    s.unsafeRunSync()._3.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
+    s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
 
     store.close()
