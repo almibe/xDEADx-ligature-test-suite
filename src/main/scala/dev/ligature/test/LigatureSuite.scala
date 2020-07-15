@@ -4,96 +4,95 @@
 
 package dev.ligature.test
 
-import cats.effect.IO
 import dev.ligature._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
-  def createStore(): LigatureStore
+  def createStore(): Ligature
 
   val testCollection: NamedEntity = NamedEntity("test")
 
   it should "Create and close store" in {
     val store = createStore()
-    val c = store.compute().use( tx => tx.collections() )
+    val c = store.compute.use( tx => tx.collections )
     c.unsafeRunSync shouldBe Set()
-    store.close()
+    store.close
   }
 
   it should "creating a new collection" in {
     val store = createStore()
 
-    store.write().use { tx =>
+    store.write.use { tx =>
       tx.createCollection(testCollection)
     }.unsafeRunSync()
 
     val c = store.compute.use { tx =>
-      tx.collections()
+      tx.collections
     }
 
     c.unsafeRunSync() shouldBe Set(testCollection)
-    store.close()
+    store.close
   }
 
   it should "access and delete new collection" in {
     val store = createStore()
 
-    store.write().use( tx => for {
+    store.write.use( tx => for {
       x <- tx.createCollection(testCollection)
     } yield x).unsafeRunSync()
 
-    val c = store.compute().use( tx => for {
-      c <- tx.collections()
+    val c = store.compute.use( tx => for {
+      c <- tx.collections
     } yield c)
 
     c.unsafeRunSync() shouldBe Set(testCollection)
 
-    store.write().use( tx => for {
+    store.write.use( tx => for {
       x <- tx.deleteCollection(testCollection)
       _ <- tx.deleteCollection(NamedEntity("Test2"))
     } yield x).unsafeRunSync()
 
-    val c2 = store.compute().use( tx => for {
-      c <- tx.collections()
+    val c2 = store.compute.use( tx => for {
+      c <- tx.collections
     } yield c)
 
     c2.unsafeRunSync() shouldBe Set()
 
-    store.close()
+    store.close
   }
 
   it should "new collections should be empty" in {
     val store = createStore()
 
-    store.write().use( tx => for {
+    store.write.use( tx => for {
       x <- tx.createCollection(testCollection)
     } yield x).unsafeRunSync()
 
-    val s = store.compute().use( tx => for {
+    val s = store.compute.use( tx => for {
       s <- tx.allStatements(testCollection)
     } yield s)
 
     s.unsafeRunSync() shouldBe Set()
-    store.close()
+    store.close
   }
 
   it should "adding statements to collections" in {
     val store = createStore()
 
-    store.write().use( tx => for {
+    store.write.use( tx => for {
       _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
       r <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
     } yield r).unsafeRunSync()
 
-    val s = store.compute().use( tx => for {
+    val s = store.compute.use( tx => for {
       s <- tx.allStatements(testCollection)
     } yield s)
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")),
             Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
-    store.close()
+    store.close
   }
 
   it should "removing statements from collections" in {
@@ -111,7 +110,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
-    store.close()
+    store.close
   }
 
   it should "new entity test" in {
@@ -133,7 +132,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
       Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(4)))
-    store.close()
+    store.close
   }
 
   it should "removing named entity" in {
@@ -155,7 +154,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
-    store.close()
+    store.close
   }
 
   it should "removing anonymous entity" in {
@@ -177,7 +176,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
-    store.close()
+    store.close
   }
 
   it should "removing predicate" in {
@@ -197,7 +196,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement) shouldBe
       Set(Statement(namedA, Predicate("test"), namedA))
-    store.close()
+    store.close
   }
 
   it should "matching against a non-existant collection" in {
@@ -210,7 +209,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
     s.unsafeRunSync()._1.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set()
     s.unsafeRunSync()._2.toSet.map((ps: PersistedStatement) => ps.statement) shouldBe Set()
-    store.close()
+    store.close
   }
 
   it should "matching statements in collections" in {
@@ -249,7 +248,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
       Statement(javert, Predicate("nationality"), StringLiteral("French")))
 
-    store.close()
+    store.close
   }
 
   it should "matching statements with literals and ranges in collections" in {
@@ -282,6 +281,6 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement) shouldBe Set(
       Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
 
-    store.close()
+    store.close
   }
 }
