@@ -117,12 +117,12 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     val store = createStore()
 
     store.write.use( tx => for {
+      e0 <- tx.newEntity(testCollection)
       e1 <- tx.newEntity(testCollection)
       e2 <- tx.newEntity(testCollection)
       e3 <- tx.newEntity(testCollection)
-      e4 <- tx.newEntity(testCollection)
-      _ <- tx.addStatement(testCollection, Statement(e1.get, Ligature.a, e2.get))
-      _ <- tx.addStatement(testCollection, Statement(e3.get, Ligature.a, e4.get))
+      _ <- tx.addStatement(testCollection, Statement(e0.get, Ligature.a, e1.get))
+      _ <- tx.addStatement(testCollection, Statement(e2.get, Ligature.a, e3.get))
     } yield ()).unsafeRunSync()
 
     val s = store.compute.use( tx => for {
@@ -130,8 +130,8 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     } yield s)
 
     s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-      Statement(AnonymousEntity(1), Ligature.a, AnonymousEntity(2)),
-      Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(4)))
+      Statement(AnonymousEntity(0), Ligature.a, AnonymousEntity(1)),
+      Statement(AnonymousEntity(2), Ligature.a, AnonymousEntity(3)))
     store.close
   }
 
