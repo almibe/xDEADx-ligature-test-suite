@@ -267,9 +267,9 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     } yield ()).unsafeRunSync()
 
     val s = store.compute.use( tx => for {
-      s <- tx.matchStatements(testCollection, None, None, StringLiteralRange("French", "German"))
-      s2 <- tx.matchStatements(testCollection, None, None, LongLiteralRange(24601, 24603))
-      s3 <- tx.matchStatements(testCollection, Some(valjean), None, LongLiteralRange(24601, 24603))
+      s <- tx.matchStatements(testCollection, None, None, Range(StringLiteral("French"), StringLiteral("German")))
+      s2 <- tx.matchStatements(testCollection, None, None, Range(LongLiteral(24601), LongLiteral(24603)))
+      s3 <- tx.matchStatements(testCollection, Some(valjean), None, Range(LongLiteral(24601), LongLiteral(24603)))
     } yield (s, s2, s3))
 
     s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
