@@ -95,23 +95,23 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close
   }
 
-  it should "removing statements from collections" in {
-    val store = createStore()
-
-    store.write.use( tx => for {
-      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
-      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
-      x <- tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
-    } yield x).unsafeRunSync()
-
-    val s = store.compute.use( tx => for {
-      s <- tx.allStatements(testCollection)
-    } yield s)
-
-    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-      Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
-    store.close
-  }
+//  it should "removing statements from collections" in {
+//    val store = createStore()
+//
+//    store.write.use( tx => for {
+//      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
+//      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+//      x <- tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
+//    } yield x).unsafeRunSync()
+//
+//    val s = store.compute.use( tx => for {
+//      s <- tx.allStatements(testCollection)
+//    } yield s)
+//
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+//    store.close
+//  }
 
   it should "new entity test" in {
     val store = createStore()
@@ -135,69 +135,69 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     store.close
   }
 
-  it should "removing named entity" in {
-    val store = createStore()
-    val entA = NamedEntity("a")
-    val entB = NamedEntity("b")
-    val entC = NamedEntity("c")
-
-    store.write.use( tx => for {
-      _ <- tx.addStatement(testCollection, Statement(entA, Ligature.a, entB))
-      _ <- tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB))
-      _ <- tx.addStatement(testCollection, Statement(entB, Ligature.a, entA))
-      _ <- tx.removeEntity(testCollection, entA)
-    } yield ()).unsafeRunSync()
-
-    val s = store.compute.use( tx => for {
-      s <- tx.allStatements(testCollection)
-    } yield s)
-
-    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-      Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
-    store.close
-  }
-
-  it should "removing anonymous entity" in {
-    val store = createStore()
-
-    store.write.use( tx => for {
-      ent1 <- tx.newEntity(testCollection)
-      ent2 <- tx.newEntity(testCollection)
-      ent3 <- tx.newEntity(testCollection)
-      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get))
-      _ <- tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get))
-      _ <- tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get))
-      _ <- tx.removeEntity(testCollection, ent1.get)
-    } yield ()).unsafeRunSync()
-
-    val s = store.compute.use( tx => for {
-      s <- tx.allStatements(testCollection)
-    } yield s)
-
-    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-      Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
-    store.close
-  }
-
-  it should "removing predicate" in {
-    val store = createStore()
-    val namedA = NamedEntity(Ligature.a.identifier)
-    store.write.use( tx => for {
-      ent1 <- tx.newEntity(testCollection)
-      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test")))
-      _ <- tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA))
-      _ <- tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get))
-      _ <- tx.removePredicate(testCollection, Ligature.a)
-    } yield ()).unsafeRunSync()
-
-    val s = store.compute.use( tx => for {
-      s <- tx.allStatements(testCollection)
-    } yield s)
-
-    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-      Set(Statement(namedA, Predicate("test"), namedA))
-    store.close
-  }
+//  it should "removing named entity" in {
+//    val store = createStore()
+//    val entA = NamedEntity("a")
+//    val entB = NamedEntity("b")
+//    val entC = NamedEntity("c")
+//
+//    store.write.use( tx => for {
+//      _ <- tx.addStatement(testCollection, Statement(entA, Ligature.a, entB))
+//      _ <- tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB))
+//      _ <- tx.addStatement(testCollection, Statement(entB, Ligature.a, entA))
+//      _ <- tx.removeEntity(testCollection, entA)
+//    } yield ()).unsafeRunSync()
+//
+//    val s = store.compute.use( tx => for {
+//      s <- tx.allStatements(testCollection)
+//    } yield s)
+//
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
+//    store.close
+//  }
+//
+//  it should "removing anonymous entity" in {
+//    val store = createStore()
+//
+//    store.write.use( tx => for {
+//      ent1 <- tx.newEntity(testCollection)
+//      ent2 <- tx.newEntity(testCollection)
+//      ent3 <- tx.newEntity(testCollection)
+//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get))
+//      _ <- tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get))
+//      _ <- tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get))
+//      _ <- tx.removeEntity(testCollection, ent1.get)
+//    } yield ()).unsafeRunSync()
+//
+//    val s = store.compute.use( tx => for {
+//      s <- tx.allStatements(testCollection)
+//    } yield s)
+//
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
+//    store.close
+//  }
+//
+//  it should "removing predicate" in {
+//    val store = createStore()
+//    val namedA = NamedEntity(Ligature.a.identifier)
+//    store.write.use( tx => for {
+//      ent1 <- tx.newEntity(testCollection)
+//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test")))
+//      _ <- tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA))
+//      _ <- tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get))
+//      _ <- tx.removePredicate(testCollection, Ligature.a)
+//    } yield ()).unsafeRunSync()
+//
+//    val s = store.compute.use( tx => for {
+//      s <- tx.allStatements(testCollection)
+//    } yield s)
+//
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(namedA, Predicate("test"), namedA))
+//    store.close
+//  }
 
   it should "matching against a non-existant collection" in {
     val store = createStore()
