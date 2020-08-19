@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   def createSession(): Resource[IO, LigatureSession]
 
-  val testCollection: NamedEntity = NamedEntity("test")
+  val testCollection: NamedElement = NamedElement("test")
 
   it should "Create and close store" in {
     createSession().use { store => IO {
@@ -51,7 +51,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
       store.write.use(tx => for {
         x <- tx.deleteCollection(testCollection)
-        _ <- tx.deleteCollection(NamedEntity("Test2"))
+        _ <- tx.deleteCollection(NamedElement("Test2"))
       } yield x).unsafeRunSync()
 
       val c2 = store.compute.use(tx => for {
@@ -82,8 +82,8 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     createSession().use { store =>
       IO {
         store.write.use(tx => for {
-          _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
-          r <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+          _ <- tx.addStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
+          r <- tx.addStatement(testCollection, Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
         } yield r).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
@@ -91,8 +91,8 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
         } yield s)
 
         s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-          Set(Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")),
-            Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+          Set(Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")),
+            Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
 
       }
     }.unsafeRunSync()
@@ -102,9 +102,9 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    createSession().use { store => IO {
 //
 //    store.write.use( tx => for {
-//      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
-//      _ <- tx.addStatement(testCollection, Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
-//      x <- tx.removeStatement(testCollection, Statement(NamedEntity("Alex"), Ligature.a, NamedEntity("Human")))
+//      _ <- tx.addStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
+//      _ <- tx.addStatement(testCollection, Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
+//      x <- tx.removeStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
 //    } yield x).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
@@ -112,7 +112,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    } yield s)
 //
 //    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-//      Set(Statement(NamedEntity("Clarice"), Ligature.a, NamedEntity("Feline")))
+//      Set(Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
 //
 //  }
 
@@ -142,13 +142,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
 //  it should "removing named entity" in {
 //    createSession().use { store => IO {
-//    val entA = NamedEntity("a")
-//    val entB = NamedEntity("b")
-//    val entC = NamedEntity("c")
+//    val entA = NamedElement("a")
+//    val entB = NamedElement("b")
+//    val entC = NamedElement("c")
 //
 //    store.write.use( tx => for {
 //      _ <- tx.addStatement(testCollection, Statement(entA, Ligature.a, entB))
-//      _ <- tx.addStatement(testCollection, Statement(entC, Predicate("a"), entB))
+//      _ <- tx.addStatement(testCollection, Statement(entC, NamedElement("a"), entB))
 //      _ <- tx.addStatement(testCollection, Statement(entB, Ligature.a, entA))
 //      _ <- tx.removeEntity(testCollection, entA)
 //    } yield ()).unsafeRunSync()
@@ -158,7 +158,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    } yield s)
 //
 //    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-//      Set(Statement(NamedEntity("c"), Predicate("a"), NamedEntity("b")))
+//      Set(Statement(NamedElement("c"), NamedElement("a"), NamedElement("b")))
 //
 //  }
 //
@@ -184,15 +184,15 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //
 //  }
 //
-//  it should "removing predicate" in {
+//  it should "removing NamedElement" in {
 //    createSession().use { store => IO {
-//    val namedA = NamedEntity(Ligature.a.identifier)
+//    val namedA = NamedElement(Ligature.a.identifier)
 //    store.write.use( tx => for {
 //      ent1 <- tx.newEntity(testCollection)
-//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedEntity("test")))
-//      _ <- tx.addStatement(testCollection, Statement(namedA, Predicate("test"), namedA))
+//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedElement("test")))
+//      _ <- tx.addStatement(testCollection, Statement(namedA, NamedElement("test"), namedA))
 //      _ <- tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get))
-//      _ <- tx.removePredicate(testCollection, Ligature.a)
+//      _ <- tx.removeNamedElement(testCollection, Ligature.a)
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
@@ -200,7 +200,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    } yield s)
 //
 //    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-//      Set(Statement(namedA, Predicate("test"), namedA))
+//      Set(Statement(namedA, NamedElement("test"), namedA))
 //
 //  }
 
@@ -222,13 +222,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   it should "matching statements in collections" in {
     createSession().use { store =>
       IO {
-        val valjean = NamedEntity("valjean")
-        val javert = NamedEntity("javert")
+        val valjean = NamedElement("valjean")
+        val javert = NamedElement("javert")
 
         store.write.use(tx => for {
-          _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-          _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-          _ <- tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
+          _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("nationality"), StringLiteral("French")))
+          _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+          _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("nationality"), StringLiteral("French")))
         } yield ()).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
@@ -236,42 +236,42 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
           s2 <- tx.matchStatements(testCollection, None, None, Some(LongLiteral(24601)))
           s3 <- tx.matchStatements(testCollection, Some(valjean))
           s4 <- tx.matchStatements(testCollection, Some(javert),
-            Some(Predicate("nationality")),
+            Some(NamedElement("nationality")),
             Some(StringLiteral("French")))
           s5 <- tx.matchStatements(testCollection, None, None, None)
         } yield (s, s2, s3, s4, s5))
 
         s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-          Statement(javert, Predicate("nationality"), StringLiteral("French")))
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
         s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
         s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-          Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
         s.unsafeRunSync()._4.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(javert, Predicate("nationality"), StringLiteral("French")))
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
         s.unsafeRunSync()._5.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-          Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
-          Statement(javert, Predicate("nationality"), StringLiteral("French")))
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)),
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
       }
     }.unsafeRunSync()
   }
 
 //  it should "matching statements with literals and ranges in collections" in {
 //    createSession().use { store => IO {
-//    val valjean = NamedEntity("valjean")
-//    val javert = NamedEntity("javert")
-//    val trout = NamedEntity("trout")
+//    val valjean = NamedElement("valjean")
+//    val javert = NamedElement("javert")
+//    val trout = NamedElement("trout")
 //
 //    store.write.use( tx => for {
-//      _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-//      _ <- tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-//      _ <- tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
-//      _ <- tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
-//      _ <- tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
-//      _ <- tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
+//      _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("nationality"), StringLiteral("French")))
+//      _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+//      _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("nationality"), StringLiteral("French")))
+//      _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("prisonNumber"), LongLiteral(24602)))
+//      _ <- tx.addStatement(testCollection, Statement(trout, NamedElement("nationality"), StringLiteral("American")))
+//      _ <- tx.addStatement(testCollection, Statement(trout, NamedElement("prisonNumber"), LongLiteral(24603)))
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
@@ -281,13 +281,13 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    } yield (s, s2, s3))
 //
 //    s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-//      Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-//      Statement(javert, Predicate("nationality"), StringLiteral("French")))
+//      Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+//      Statement(javert, NamedElement("nationality"), StringLiteral("French")))
 //    s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-//      Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
-//      Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
+//      Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)),
+//      Statement(javert, NamedElement("prisonNumber"), LongLiteral(24602)))
 //    s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-//      Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+//      Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
 //
 //
 //  }
