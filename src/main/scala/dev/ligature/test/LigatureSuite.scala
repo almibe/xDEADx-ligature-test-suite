@@ -134,8 +134,8 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
         } yield s)
 
         s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
-          Statement(AnonymousEntity(0), Ligature.a, AnonymousEntity(1)),
-          Statement(AnonymousEntity(2), Ligature.a, AnonymousEntity(3)))
+          Statement(AnonymousElement(0), Ligature.a, AnonymousElement(1)),
+          Statement(AnonymousElement(2), Ligature.a, AnonymousElement(3)))
       }
     }.unsafeRunSync()
   }
@@ -180,7 +180,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    } yield s)
 //
 //    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
-//      Set(Statement(AnonymousEntity(3), Ligature.a, AnonymousEntity(2)))
+//      Set(Statement(AnonymousElement(3), Ligature.a, AnonymousElement(2)))
 //
 //  }
 //
