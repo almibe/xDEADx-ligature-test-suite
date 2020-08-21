@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   def createSession(): Resource[IO, LigatureSession]
 
-  val testCollection: CollectionName = CollectionName("test")
+  val testCollection: NamedElement = NamedElement("test")
 
   it should "Create and close store" in {
     createSession().use { store => IO {
@@ -51,7 +51,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 
       store.write.use(tx => for {
         x <- tx.deleteCollection(testCollection)
-        _ <- tx.deleteCollection(CollectionName("Test2"))
+        _ <- tx.deleteCollection(NamedElement("Test2"))
       } yield x).unsafeRunSync()
 
       val c2 = store.compute.use(tx => for {
@@ -70,7 +70,7 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
         } yield x).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
-          s <- tx.allTriples(testCollection)
+          s <- tx.allStatements(testCollection)
         } yield s)
 
         s.unsafeRunSync().toSet shouldBe Set()
@@ -82,17 +82,17 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     createSession().use { store =>
       IO {
         store.write.use(tx => for {
-          _ <- tx.addTriple(testCollection, Triple(Node(StringLiteral("Alex")), Edge("isa"), Node(StringLiteral("Human"))))
-          r <- tx.addTriple(testCollection, Triple(Node(StringLiteral("Clarice")), Edge("isa"), Node(StringLiteral("Feline"))))
+          _ <- tx.addStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
+          r <- tx.addStatement(testCollection, Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
         } yield r).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
-          s <- tx.allTriples(testCollection)
+          s <- tx.allStatements(testCollection)
         } yield s)
 
-        s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe
-          Set(Triple(Node(StringLiteral("Alex")), Edge("isa"), Node(StringLiteral("Human"))),
-            Triple(Node(StringLiteral("Clarice")), Edge("isa"), Node(StringLiteral("Feline"))))
+        s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+          Set(Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")),
+            Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
 
       }
     }.unsafeRunSync()
@@ -102,17 +102,17 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //    createSession().use { store => IO {
 //
 //    store.write.use( tx => for {
-//      _ <- tx.addTriple(testCollection, Triple(Node(StringLiteral("Alex"), Edge("isa"), Node(StringLiteral("Human")))
-//      _ <- tx.addTriple(testCollection, Triple(Node(StringLiteral("Clarice"), Edge("isa"), Node(StringLiteral("Feline")))
-//      x <- tx.removeTriple(testCollection, Triple(Node(StringLiteral("Alex"), Edge("isa"), Node(StringLiteral("Human")))
+//      _ <- tx.addStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
+//      _ <- tx.addStatement(testCollection, Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
+//      x <- tx.removeStatement(testCollection, Statement(NamedElement("Alex"), Ligature.a, NamedElement("Human")))
 //    } yield x).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
-//      s <- tx.allTriples(testCollection)
+//      s <- tx.allStatements(testCollection)
 //    } yield s)
 //
-//    s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe
-//      Set(Triple(Node(StringLiteral("Clarice"), Edge("isa"), Node(StringLiteral("Feline")))
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(NamedElement("Clarice"), Ligature.a, NamedElement("Feline")))
 //
 //  }
 
@@ -125,40 +125,40 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
           e1 <- tx.newEntity(testCollection)
           e2 <- tx.newEntity(testCollection)
           e3 <- tx.newEntity(testCollection)
-          _ <- tx.addTriple(testCollection, Triple(e0.get, Edge("isa"), e1.get))
-          _ <- tx.addTriple(testCollection, Triple(e2.get, Edge("isa"), e3.get))
+          _ <- tx.addStatement(testCollection, Statement(e0.get, Ligature.a, e1.get))
+          _ <- tx.addStatement(testCollection, Statement(e2.get, Ligature.a, e3.get))
         } yield ()).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
-          s <- tx.allTriples(testCollection)
+          s <- tx.allStatements(testCollection)
         } yield s)
 
-        s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(AnonymousNode(0), Edge("isa"), AnonymousNode(1)),
-          Triple(AnonymousNode(2), Edge("isa"), AnonymousNode(3)))
+        s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(AnonymousElement(0), Ligature.a, AnonymousElement(1)),
+          Statement(AnonymousElement(2), Ligature.a, AnonymousElement(3)))
       }
     }.unsafeRunSync()
   }
 
 //  it should "removing named entity" in {
 //    createSession().use { store => IO {
-//    val entA = Node(StringLiteral("a")
-//    val entB = Node(StringLiteral("b")
-//    val entC = Node(StringLiteral("c")
+//    val entA = NamedElement("a")
+//    val entB = NamedElement("b")
+//    val entC = NamedElement("c")
 //
 //    store.write.use( tx => for {
-//      _ <- tx.addTriple(testCollection, Triple(entA, Edge("isa"), entB))
-//      _ <- tx.addTriple(testCollection, Triple(entC, Node(StringLiteral("a"), entB))
-//      _ <- tx.addTriple(testCollection, Triple(entB, Edge("isa"), entA))
+//      _ <- tx.addStatement(testCollection, Statement(entA, Ligature.a, entB))
+//      _ <- tx.addStatement(testCollection, Statement(entC, NamedElement("a"), entB))
+//      _ <- tx.addStatement(testCollection, Statement(entB, Ligature.a, entA))
 //      _ <- tx.removeEntity(testCollection, entA)
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
-//      s <- tx.allTriples(testCollection)
+//      s <- tx.allStatements(testCollection)
 //    } yield s)
 //
-//    s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe
-//      Set(Triple(Node(StringLiteral("c"), Node(StringLiteral("a"), Node(StringLiteral("b")))
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(NamedElement("c"), NamedElement("a"), NamedElement("b")))
 //
 //  }
 //
@@ -169,38 +169,38 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
 //      ent1 <- tx.newEntity(testCollection)
 //      ent2 <- tx.newEntity(testCollection)
 //      ent3 <- tx.newEntity(testCollection)
-//      _ <- tx.addTriple(testCollection, Triple(ent1.get, Edge("isa"), ent2.get))
-//      _ <- tx.addTriple(testCollection, Triple(ent3.get, Edge("isa"), ent2.get))
-//      _ <- tx.addTriple(testCollection, Triple(ent2.get, Edge("isa"), ent1.get))
+//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, ent2.get))
+//      _ <- tx.addStatement(testCollection, Statement(ent3.get, Ligature.a, ent2.get))
+//      _ <- tx.addStatement(testCollection, Statement(ent2.get, Ligature.a, ent1.get))
 //      _ <- tx.removeEntity(testCollection, ent1.get)
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
-//      s <- tx.allTriples(testCollection)
+//      s <- tx.allStatements(testCollection)
 //    } yield s)
 //
-//    s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe
-//      Set(Triple(AnonymousNode(3), Edge("isa"), AnonymousNode(2)))
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(AnonymousElement(3), Ligature.a, AnonymousElement(2)))
 //
 //  }
 //
 //  it should "removing NamedElement" in {
 //    createSession().use { store => IO {
-//    val namedA = Node(StringLiteral(Edge("isa").identifier)
+//    val namedA = NamedElement(Ligature.a.identifier)
 //    store.write.use( tx => for {
 //      ent1 <- tx.newEntity(testCollection)
-//      _ <- tx.addTriple(testCollection, Triple(ent1.get, Edge("isa"), Node(StringLiteral("test")))
-//      _ <- tx.addTriple(testCollection, Triple(namedA, Node(StringLiteral("test"), namedA))
-//      _ <- tx.addTriple(testCollection, Triple(namedA, Edge("isa"), ent1.get))
-//      _ <- tx.removeNode(StringLiteral(testCollection, Edge("isa"))
+//      _ <- tx.addStatement(testCollection, Statement(ent1.get, Ligature.a, NamedElement("test")))
+//      _ <- tx.addStatement(testCollection, Statement(namedA, NamedElement("test"), namedA))
+//      _ <- tx.addStatement(testCollection, Statement(namedA, Ligature.a, ent1.get))
+//      _ <- tx.removeNamedElement(testCollection, Ligature.a)
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
-//      s <- tx.allTriples(testCollection)
+//      s <- tx.allStatements(testCollection)
 //    } yield s)
 //
-//    s.unsafeRunSync().map((ts: PersistedTriple) => ts.triple).toSet shouldBe
-//      Set(Triple(namedA, Node(StringLiteral("test"), namedA))
+//    s.unsafeRunSync().map((ps: PersistedStatement) => ps.statement).toSet shouldBe
+//      Set(Statement(namedA, NamedElement("test"), namedA))
 //
 //  }
 
@@ -208,12 +208,12 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
     createSession().use { store =>
       IO {
         val s = store.compute.use(tx => for {
-          s <- tx.matchTriples(testCollection, None, None, Some(StringLiteral("French")))
-          s2 <- tx.matchTriples(testCollection, None, Some(Edge("isa")), None)
+          s <- tx.matchStatements(testCollection, None, None, Some(StringLiteral("French")))
+          s2 <- tx.matchStatements(testCollection, None, Some(Ligature.a), None)
         } yield (s, s2))
 
-        s.unsafeRunSync()._1.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set()
-        s.unsafeRunSync()._2.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set()
+        s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set()
+        s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set()
 
       }
     }.unsafeRunSync()
@@ -222,72 +222,72 @@ abstract class LigatureSuite extends AnyFlatSpec with Matchers {
   it should "matching statements in collections" in {
     createSession().use { store =>
       IO {
-        val valjean = Node(StringLiteral("valjean"))
-        val javert = Node(StringLiteral("javert"))
+        val valjean = NamedElement("valjean")
+        val javert = NamedElement("javert")
 
         store.write.use(tx => for {
-          _ <- tx.addTriple(testCollection, Triple(valjean, Edge("nationality"), Node(StringLiteral("French"))))
-          _ <- tx.addTriple(testCollection, Triple(valjean, Edge("prisonNumber"), Node(LongLiteral(24601))))
-          _ <- tx.addTriple(testCollection, Triple(javert, Edge("nationality"), Node(StringLiteral("French"))))
+          _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("nationality"), StringLiteral("French")))
+          _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+          _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("nationality"), StringLiteral("French")))
         } yield ()).unsafeRunSync()
 
         val s = store.compute.use(tx => for {
-          s <- tx.matchTriples(testCollection, None, None, Some(StringLiteral("French")))
-          s2 <- tx.matchTriples(testCollection, None, None, Some(LongLiteral(24601)))
-          s3 <- tx.matchTriples(testCollection, Some(valjean))
-          s4 <- tx.matchTriples(testCollection, Some(javert),
-            Some(Edge("nationality")),
+          s <- tx.matchStatements(testCollection, None, None, Some(StringLiteral("French")))
+          s2 <- tx.matchStatements(testCollection, None, None, Some(LongLiteral(24601)))
+          s3 <- tx.matchStatements(testCollection, Some(valjean))
+          s4 <- tx.matchStatements(testCollection, Some(javert),
+            Some(NamedElement("nationality")),
             Some(StringLiteral("French")))
-          s5 <- tx.matchTriples(testCollection, None, None, None)
+          s5 <- tx.matchStatements(testCollection, None, None, None)
         } yield (s, s2, s3, s4, s5))
 
-        s.unsafeRunSync()._1.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(valjean, Edge("nationality"), StringLiteral("French")),
-          Triple(javert, Edge("nationality"), StringLiteral("French")))
-        s.unsafeRunSync()._2.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(valjean, Edge("prisonNumber"), LongLiteral(24601)))
-        s.unsafeRunSync()._3.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(valjean, Edge("nationality"), StringLiteral("French")),
-          Triple(valjean, Edge("prisonNumber"), LongLiteral(24601)))
-        s.unsafeRunSync()._4.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(javert, Edge("nationality"), StringLiteral("French")))
-        s.unsafeRunSync()._5.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-          Triple(valjean, Edge("nationality"), StringLiteral("French")),
-          Triple(valjean, Edge("prisonNumber"), LongLiteral(24601)),
-          Triple(javert, Edge("nationality"), StringLiteral("French")))
+        s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
+        s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+        s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+        s.unsafeRunSync()._4.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
+        s.unsafeRunSync()._5.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+          Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+          Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)),
+          Statement(javert, NamedElement("nationality"), StringLiteral("French")))
       }
     }.unsafeRunSync()
   }
 
 //  it should "matching statements with literals and ranges in collections" in {
 //    createSession().use { store => IO {
-//    val valjean = Node(StringLiteral("valjean")
-//    val javert = Node(StringLiteral("javert")
-//    val trout = Node(StringLiteral("trout")
+//    val valjean = NamedElement("valjean")
+//    val javert = NamedElement("javert")
+//    val trout = NamedElement("trout")
 //
 //    store.write.use( tx => for {
-//      _ <- tx.addTriple(testCollection, Triple(valjean, Node(StringLiteral("nationality"), StringLiteral("French")))
-//      _ <- tx.addTriple(testCollection, Triple(valjean, Node(StringLiteral("prisonNumber"), LongLiteral(24601)))
-//      _ <- tx.addTriple(testCollection, Triple(javert, Node(StringLiteral("nationality"), StringLiteral("French")))
-//      _ <- tx.addTriple(testCollection, Triple(javert, Node(StringLiteral("prisonNumber"), LongLiteral(24602)))
-//      _ <- tx.addTriple(testCollection, Triple(trout, Node(StringLiteral("nationality"), StringLiteral("American")))
-//      _ <- tx.addTriple(testCollection, Triple(trout, Node(StringLiteral("prisonNumber"), LongLiteral(24603)))
+//      _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("nationality"), StringLiteral("French")))
+//      _ <- tx.addStatement(testCollection, Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
+//      _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("nationality"), StringLiteral("French")))
+//      _ <- tx.addStatement(testCollection, Statement(javert, NamedElement("prisonNumber"), LongLiteral(24602)))
+//      _ <- tx.addStatement(testCollection, Statement(trout, NamedElement("nationality"), StringLiteral("American")))
+//      _ <- tx.addStatement(testCollection, Statement(trout, NamedElement("prisonNumber"), LongLiteral(24603)))
 //    } yield ()).unsafeRunSync()
 //
 //    val s = store.compute.use( tx => for {
-//      s <- tx.matchTriples(testCollection, None, None, Range(StringLiteral("French"), StringLiteral("German")))
-//      s2 <- tx.matchTriples(testCollection, None, None, Range(LongLiteral(24601), LongLiteral(24603)))
-//      s3 <- tx.matchTriples(testCollection, Some(valjean), None, Range(LongLiteral(24601), LongLiteral(24603)))
+//      s <- tx.matchStatements(testCollection, None, None, Range(StringLiteral("French"), StringLiteral("German")))
+//      s2 <- tx.matchStatements(testCollection, None, None, Range(LongLiteral(24601), LongLiteral(24603)))
+//      s3 <- tx.matchStatements(testCollection, Some(valjean), None, Range(LongLiteral(24601), LongLiteral(24603)))
 //    } yield (s, s2, s3))
 //
-//    s.unsafeRunSync()._1.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-//      Triple(valjean, Node(StringLiteral("nationality"), StringLiteral("French")),
-//      Triple(javert, Node(StringLiteral("nationality"), StringLiteral("French")))
-//    s.unsafeRunSync()._2.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-//      Triple(valjean, Node(StringLiteral("prisonNumber"), LongLiteral(24601)),
-//      Triple(javert, Node(StringLiteral("prisonNumber"), LongLiteral(24602)))
-//    s.unsafeRunSync()._3.map((ts: PersistedTriple) => ts.triple).toSet shouldBe Set(
-//      Triple(valjean, Node(StringLiteral("prisonNumber"), LongLiteral(24601)))
+//    s.unsafeRunSync()._1.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+//      Statement(valjean, NamedElement("nationality"), StringLiteral("French")),
+//      Statement(javert, NamedElement("nationality"), StringLiteral("French")))
+//    s.unsafeRunSync()._2.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+//      Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)),
+//      Statement(javert, NamedElement("prisonNumber"), LongLiteral(24602)))
+//    s.unsafeRunSync()._3.map((ps: PersistedStatement) => ps.statement).toSet shouldBe Set(
+//      Statement(valjean, NamedElement("prisonNumber"), LongLiteral(24601)))
 //
 //
 //  }
