@@ -4,18 +4,19 @@
 
 package dev.ligature.test
 
-import io.kotlintest.shouldBe
-import io.kotlintest.specs.AbstractStringSpec
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.toSet
-import dev.ligature.*
+import dev.ligature.Ligature
+import dev.ligature.NamedElement
 
-fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> Unit {
-    val testCollection = CollectionName("test")
+fun createSpec(creationFunction: () -> Ligature): StringSpec.() -> Unit {
+    val testCollection = NamedElement("test")
 
     return {
         "Create and close store" {
             val store = creationFunction()
-            store.compute { tx ->
+            store.read { tx ->
                 tx.collections()
             }.toSet() shouldBe setOf()
             store.close()
@@ -26,7 +27,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.write { tx ->
                 tx.createCollection(testCollection)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.collections()
             }.toSet() shouldBe setOf(testCollection)
             store.close()
@@ -37,14 +38,14 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.write { tx ->
                 tx.createCollection(testCollection)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.collections()
             }.toSet() shouldBe setOf(testCollection)
             store.write { tx ->
                 tx.deleteCollection(testCollection)
-                tx.deleteCollection(CollectionName("test2"))
+                tx.deleteCollection(NamedElement("test2"))
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.collections()
             }.toSet() shouldBe setOf()
             store.close()
@@ -55,7 +56,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
             store.write { tx ->
                 tx.createCollection(testCollection)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe setOf()
             store.close()
@@ -69,7 +70,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(ent1, a, ent2))
                 tx.addStatement(testCollection, Statement(ent1, a, ent2))
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
                     setOf(Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
@@ -87,7 +88,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(ent3, a, ent2))
                 tx.removeStatement(testCollection, Statement(ent1, a, ent2))
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
                     setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
@@ -119,7 +120,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(ent2, a, ent1))
                 tx.removeEntity(testCollection, ent1)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
                     setOf(Statement(NamedEntity("c"), a, NamedEntity("b")))
@@ -137,7 +138,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(ent2, a, ent1))
                 tx.removeEntity(testCollection, ent1)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
                     setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
@@ -155,7 +156,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(ent2, a, ent1))
                 tx.removePredicate(testCollection, a)
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.allStatements(testCollection)
             }.toSet() shouldBe
                     setOf(Statement(AnonymousEntity(3), Predicate("test"), AnonymousEntity(2)))
@@ -164,7 +165,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
 
         "matching against a non-existant collection" {
             val store = creationFunction()
-            store.compute { tx ->
+            store.read { tx ->
                 tx.matchStatements(testCollection, null, null, StringLiteral("French"))
                     .toSet() shouldBe setOf()
                 tx.matchStatements(testCollection, null, a, null)
@@ -184,7 +185,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
                 tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.matchStatements(testCollection, null, null, StringLiteral("French"))
                         .toSet() shouldBe setOf(
                             Statement(valjean, Predicate("nationality"), StringLiteral("French")),
@@ -229,7 +230,7 @@ fun createSpec(creationFunction: () -> LigatureStore): AbstractStringSpec.() -> 
                 tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
                 tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
             }
-            store.compute { tx ->
+            store.read { tx ->
                 tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
                         .toSet() shouldBe setOf(
                             Statement(valjean, Predicate("nationality"), StringLiteral("French")),
