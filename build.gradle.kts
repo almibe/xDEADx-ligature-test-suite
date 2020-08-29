@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm").version("1.3.70")
+    id("org.jetbrains.kotlin.jvm").version("1.4.0")
     `maven-publish`
 }
 
@@ -13,9 +13,9 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("dev.ligature:ligature:0.1.0-SNAPSHOT")
-    implementation("io.kotlintest:kotlintest-runner-junit5:3.4.2")
+    implementation("io.kotest:kotest-runner-junit5:4.2.2")
 }
 
 publishing {
