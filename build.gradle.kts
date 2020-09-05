@@ -1,5 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.jvm").version("1.4.0")
+    `java-library`
     `maven-publish`
 }
 
@@ -12,6 +13,8 @@ repositories {
 }
 
 dependencies {
+    // Align versions of all Kotlin components
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("dev.ligature:ligature:0.1.0-SNAPSHOT")
