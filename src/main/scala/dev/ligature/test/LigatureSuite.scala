@@ -4,43 +4,41 @@
 
 package dev.ligature.test
 
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.flow.toSet
-import dev.ligature.Ligature
-import dev.ligature.NamedElement
-import kotlinx.coroutines.runBlocking
+import munit._
 
-fun createSpec(creationFunction: () -> Ligature): StringSpec.() -> Unit {
-    val testCollection = NamedElement("test")
+class LigatureSuite extends munit.FunSuite {
+}
 
-    return {
-        "Create and close store" {
-            runBlocking {
-                val store = creationFunction()
-                store.read { tx ->
-                    runBlocking {
-                        tx.collections()
-                    }
-                }.toSet() shouldBe setOf()
-            }
-        }
-
-        "creating a new collection" {
-            runBlocking {
-                val store = creationFunction()
-                store.write { tx ->
-                    runBlocking {
-                        tx.createCollection(testCollection)
-                    }
-                }
-                store.read { tx ->
-                    runBlocking {
-                        tx.collections()
-                    }
-                }.toSet() shouldBe setOf(testCollection)
-            }
-        }
+//fun createSpec(creationFunction: () -> Ligature): StringSpec.() -> Unit {
+//    val testCollection = NamedElement("test")
+//
+//    return {
+//        "Create and close store" {
+//            runBlocking {
+//                val store = creationFunction()
+//                store.read { tx ->
+//                    runBlocking {
+//                        tx.collections()
+//                    }
+//                }.toSet() shouldBe setOf()
+//            }
+//        }
+//
+//        "creating a new collection" {
+//            runBlocking {
+//                val store = creationFunction()
+//                store.write { tx ->
+//                    runBlocking {
+//                        tx.createCollection(testCollection)
+//                    }
+//                }
+//                store.read { tx ->
+//                    runBlocking {
+//                        tx.collections()
+//                    }
+//                }.toSet() shouldBe setOf(testCollection)
+//            }
+//        }
 //
 //        "access and delete new collection" {
 //            val store = creationFunction()
@@ -269,5 +267,5 @@ fun createSpec(creationFunction: () -> Ligature): StringSpec.() -> Unit {
 ////        TODO("Add assertions")
 ////        tx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
 ////    }
-    }
-}
+//    }
+//}
