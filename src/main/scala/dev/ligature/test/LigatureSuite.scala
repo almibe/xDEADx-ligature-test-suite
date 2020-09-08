@@ -6,18 +6,19 @@ package dev.ligature.test
 
 import dev.ligature._
 import munit._
+import monix.execution.Scheduler.Implicits.global
 
-abstract class LigatureSuite extends munit.FunSuite {
-  abstract def createLigatureSession(): LigatureSession
+abstract class LigatureSuite extends FunSuite {
+  def createLigatureSession(): LigatureSession
 
-  val testCollection = LocalNode("test")
+  val testCollection: LocalNode = LocalNode("test")
 
   test("Create and close store") {
-    assert(true == false)
-    val store = creationFunction()
-    store.read { tx ->
-        tx.collections()
-    }.toSet() shouldBe setOf()
+    val store = createLigatureSession()
+    val res = store.read().use { tx =>
+      tx.collections().toListL
+    }.runSyncUnsafe().toSet
+    assert(res == Set())
   }
 
   test("creating a new collection") {
