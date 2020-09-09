@@ -18,57 +18,48 @@ abstract class LigatureSuite extends FunSuite {
     val res = store.read().use { tx =>
       tx.collections().toListL
     }.runSyncUnsafe().toSet
-    assert(res == Set())
+    assert(res.isEmpty)
   }
 
   test("creating a new collection") {
-    assert(true == false)
-//      runBlocking {
-//        val store = creationFunction()
-//        store.write { tx ->
-//          runBlocking {
-//            tx.createCollection(testCollection)
-//          }
-//        }
-//        store.read { tx ->
-//          runBlocking {
-//          tx.collections()
-//        }
-//      }.toSet() shouldBe setOf(testCollection)
-//    }
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      tx.createCollection(testCollection)
+    }.runSyncUnsafe()
+    val res = store.read.use { tx =>
+      tx.collections().toListL
+    }.runSyncUnsafe().toSet
+    assert(res == Set(testCollection))
   }
 
   test("access and delete new collection") {
-    assert(true == false)
-//    val store = creationFunction()
-//    store.write { tx ->
-//      tx.createCollection(testCollection)
-//    }
-//    store.read { tx ->
-//      tx.collections()
-//    }.toSet() shouldBe setOf(testCollection)
-//    store.write { tx ->
-//      tx.deleteCollection(testCollection)
-//      tx.deleteCollection(NamedElement("test2"))
-//    }
-//    store.read { tx ->
-//      tx.collections()
-//    }.toSet() shouldBe setOf()
-//    store.close()
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      tx.createCollection(testCollection)
+    }.runSyncUnsafe()
+    val res = store.read.use { tx =>
+      tx.collections().toListL
+    }.runSyncUnsafe().toSet
+    store.write.use { tx =>
+      tx.deleteCollection(testCollection)
+      tx.deleteCollection(LocalNode("test2"))
+    }.runSyncUnsafe()
+    val res2 = store.read.use { tx =>
+      tx.collections().toListL
+    }.runSyncUnsafe()
+    assert(res2.isEmpty)
   }
 
   test("new collections should be empty") {
-    assert(true == false)
-//    val store = creationFunction()
-//    store.write { tx ->
-//      tx.createCollection(testCollection)
-//    }
-//    store.read { tx ->
-//      tx.allStatements(testCollection)
-//    }.toSet() shouldBe setOf()
-//    store.close()
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      tx.createCollection(testCollection)
+    }.runSyncUnsafe()
+    val res = store.read.use { tx =>
+      tx.allStatements(testCollection).toListL
+    }.runSyncUnsafe().toSet
+    assert(res.isEmpty)
   }
-}
 
 //        "adding statements to collections" {
 //            val store = creationFunction()
@@ -270,3 +261,4 @@ abstract class LigatureSuite extends FunSuite {
 ////    }
 //    }
 //}
+}
