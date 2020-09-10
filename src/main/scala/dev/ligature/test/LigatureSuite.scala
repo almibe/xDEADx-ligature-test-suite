@@ -5,17 +5,18 @@
 package dev.ligature.test
 
 import dev.ligature._
+import dev.ligature.Ligature.a
 import munit._
 import monix.execution.Scheduler.Implicits.global
 
 abstract class LigatureSuite extends FunSuite {
   def createLigatureSession(): LigatureSession
 
-  val testCollection: LocalNode = LocalNode("test")
+  val testCollection: NamedNode = NamedNode("test")
 
   test("Create and close store") {
     val store = createLigatureSession()
-    val res = store.read().use { tx =>
+    val res = store.read.use { tx =>
       tx.collections().toListL
     }.runSyncUnsafe().toSet
     assert(res.isEmpty)
@@ -42,7 +43,7 @@ abstract class LigatureSuite extends FunSuite {
     }.runSyncUnsafe().toSet
     store.write.use { tx =>
       tx.deleteCollection(testCollection)
-      tx.deleteCollection(LocalNode("test2"))
+      tx.deleteCollection(NamedNode("test2"))
     }.runSyncUnsafe()
     val res2 = store.read.use { tx =>
       tx.collections().toListL
@@ -61,56 +62,54 @@ abstract class LigatureSuite extends FunSuite {
     assert(res.isEmpty)
   }
 
-//        "adding statements to collections" {
-//            val store = creationFunction()
-//            store.write { tx ->
-//                val ent1 = tx.newEntity(testCollection)
-//                val ent2 = tx.newEntity(testCollection)
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//            }
-//            store.read { tx ->
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
-//                           Statement(AnonymousEntity(1), a, AnonymousEntity(2)))
-//            store.close()
-//        }
-//
-//        "removing statements from collections" {
-//            val store = creationFunction()
-//            store.write { tx ->
-//                val ent1 = tx.newEntity(testCollection)
-//                val ent2 = tx.newEntity(testCollection)
-//                val ent3 = tx.newEntity(testCollection)
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent3, a, ent2))
-//                tx.removeStatement(testCollection, Statement(ent1, a, ent2))
-//            }
-//            store.read { tx ->
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
-//            store.close()
-//        }
-//
-//        "new entity test" {
-//            val store = creationFunction()
-//            store.write { tx ->
+  test("adding statements to collections") {
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      val ent1 = tx.newEntity(testCollection).runSyncUnsafe()
+      val ent2 = tx.newEntity(testCollection).runSyncUnsafe()
+      tx.addStatement(testCollection, Statement(ent1, a, ent2))
+      tx.addStatement(testCollection, Statement(ent1, a, ent2))
+    }.runSyncUnsafe()
+    val res  = store.read.use { tx =>
+      tx.allStatements(testCollection).map { _.statement }.toListL
+    }.runSyncUnsafe().toSet
+    assert(res == Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
+      Statement(AnonymousNode(1), a, AnonymousNode(2))))
+  }
+
+//  test("removing statements from collections") {
+//    val store = createLigatureSession()
+//    store.write.use { tx =>
+//      val ent1 = tx.newEntity(testCollection)
+//      val ent2 = tx.newEntity(testCollection)
+//      val ent3 = tx.newEntity(testCollection)
+//      tx.addStatement(testCollection, Statement(ent1, a, ent2))
+//      tx.addStatement(testCollection, Statement(ent3, a, ent2))
+//      tx.removeStatement(testCollection, Statement(ent1, a, ent2))
+//    }.runSyncUnsafe()
+//    store.read.use { tx =>
+//      tx.allStatements(testCollection)
+//    }.toSet() shouldBe
+//            setOf(Statement(AnonymousNode(3), a, AnonymousNode(2)))
+//  }
+
+//        test("new entity test") {
+//            val store = createLigatureSession()
+//            store.write.use { tx =>
 //                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
 //                tx.addStatement(testCollection, Statement(tx.newEntity(testCollection), a, tx.newEntity(testCollection)))
 //            }
-//            store. compute { tx ->
+//            store. compute { tx =>
 //                tx.allStatements(testCollection)
 //            }.toSet() shouldBe setOf(
-//                    Statement(AnonymousEntity(1), a, AnonymousEntity(2)),
-//                    Statement(AnonymousEntity(4), a, AnonymousEntity(5)))
-//            store.close()
+//                    Statement(AnonymousNode(1), a, AnonymousNode(2)),
+//                    Statement(AnonymousNode(4), a, AnonymousNode(5)))
+//
 //        }
 //
-//        "removing named entity" {
-//            val store = creationFunction()
-//            store.write { tx ->
+//        test("removing named entity") {
+//            val store = createLigatureSession()
+//            store.write.use { tx =>
 //                val ent1 = NamedEntity("a")
 //                val ent2 = NamedEntity("b")
 //                val ent3 = NamedEntity("c")
@@ -119,16 +118,16 @@ abstract class LigatureSuite extends FunSuite {
 //                tx.addStatement(testCollection, Statement(ent2, a, ent1))
 //                tx.removeEntity(testCollection, ent1)
 //            }
-//            store.read { tx ->
+//            store.read.use { tx =>
 //                tx.allStatements(testCollection)
 //            }.toSet() shouldBe
 //                    setOf(Statement(NamedEntity("c"), a, NamedEntity("b")))
-//            store.close()
+//
 //        }
 //
-//        "removing anonymous entity" {
-//            val store = creationFunction()
-//            store.write { tx ->
+//        test("removing anonymous entity") {
+//            val store = createLigatureSession()
+//            store.write.use { tx =>
 //                val ent1 = tx.newEntity(testCollection)
 //                val ent2 = tx.newEntity(testCollection)
 //                val ent3 = tx.newEntity(testCollection)
@@ -137,16 +136,16 @@ abstract class LigatureSuite extends FunSuite {
 //                tx.addStatement(testCollection, Statement(ent2, a, ent1))
 //                tx.removeEntity(testCollection, ent1)
 //            }
-//            store.read { tx ->
+//            store.read.use { tx =>
 //                tx.allStatements(testCollection)
 //            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousEntity(3), a, AnonymousEntity(2)))
-//            store.close()
+//                    setOf(Statement(AnonymousNode(3), a, AnonymousNode(2)))
+//
 //        }
 //
-//        "removing predicate" {
-//            val store = creationFunction()
-//            store.write { tx ->
+//        test("removing predicate") {
+//            val store = createLigatureSession()
+//            store.write.use { tx =>
 //                val ent1 = tx.newEntity(testCollection)
 //                val ent2 = tx.newEntity(testCollection)
 //                val ent3 = tx.newEntity(testCollection)
@@ -155,36 +154,36 @@ abstract class LigatureSuite extends FunSuite {
 //                tx.addStatement(testCollection, Statement(ent2, a, ent1))
 //                tx.removePredicate(testCollection, a)
 //            }
-//            store.read { tx ->
+//            store.read.use { tx =>
 //                tx.allStatements(testCollection)
 //            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousEntity(3), Predicate("test"), AnonymousEntity(2)))
-//            store.close()
+//                    setOf(Statement(AnonymousNode(3), Predicate("test"), AnonymousNode(2)))
+//
 //        }
 //
-//        "matching against a non-existant collection" {
-//            val store = creationFunction()
-//            store.read { tx ->
+//        test("matching against a non-existant collection") {
+//            val store = createLigatureSession()
+//            store.read.use { tx =>
 //                tx.matchStatements(testCollection, null, null, StringLiteral("French"))
 //                    .toSet() shouldBe setOf()
 //                tx.matchStatements(testCollection, null, a, null)
 //                    .toSet() shouldBe setOf()
 //            }
-//            store.close()
+//
 //        }
 //
-//        "matching statements in collections" {
-//            val store = creationFunction()
+//        test("matching statements in collections") {
+//            val store = createLigatureSession()
 //            lateinit var valjean: Entity
 //            lateinit var javert: Entity
-//            store.write { tx ->
+//            store.write.use { tx =>
 //                valjean = tx.newEntity(testCollection)
 //                javert = tx.newEntity(testCollection)
 //                tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
 //                tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
 //                tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
 //            }
-//            store.read { tx ->
+//            store.read.use { tx =>
 //                tx.matchStatements(testCollection, null, null, StringLiteral("French"))
 //                        .toSet() shouldBe setOf(
 //                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
@@ -210,15 +209,15 @@ abstract class LigatureSuite extends FunSuite {
 //                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
 //                )
 //            }
-//            store.close()
+//
 //        }
 //
-//        "matching statements with literals and ranges in collections" {
-//            val store = creationFunction()
+//        test("matching statements with literals and ranges in collections") {
+//            val store = createLigatureSession()
 //            lateinit var valjean: Entity
 //            lateinit var javert: Entity
 //            lateinit var trout: Entity
-//            store.write { tx ->
+//            store.write.use { tx =>
 //                valjean = tx.newEntity(testCollection)
 //                javert = tx.newEntity(testCollection)
 //                trout = tx.newEntity(testCollection)
@@ -229,7 +228,7 @@ abstract class LigatureSuite extends FunSuite {
 //                tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
 //                tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
 //            }
-//            store.read { tx ->
+//            store.read.use { tx =>
 //                tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
 //                        .toSet() shouldBe setOf(
 //                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
@@ -245,11 +244,11 @@ abstract class LigatureSuite extends FunSuite {
 //                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
 //                )
 //            }
-//            store.close()
+//
 //        }
 //
-////    "matching statements with collection literals in collections" {
-////        val store = creationFunction()
+////    test("matching statements with collection literals in collections") {
+////        val store = createLigatureSession()
 ////        val collection = store.createCollection(NamedEntity("test"))
 ////        collection shouldNotBe null
 ////        val tx = collection.writeTx()
