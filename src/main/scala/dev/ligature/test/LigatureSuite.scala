@@ -42,8 +42,10 @@ abstract class LigatureSuite extends FunSuite {
       tx.collections().toListL
     }.runSyncUnsafe().toSet
     store.write.use { tx =>
-      tx.deleteCollection(testCollection)
-      tx.deleteCollection(NamedNode("test2"))
+      for {
+        _ <- tx.deleteCollection(testCollection)
+        _ <- tx.deleteCollection(NamedNode("test2"))
+      } yield()
     }.runSyncUnsafe()
     val res2 = store.read.use { tx =>
       tx.collections().toListL
@@ -65,10 +67,12 @@ abstract class LigatureSuite extends FunSuite {
   test("adding statements to collections") {
     val store = createLigatureSession()
     store.write.use { tx =>
-      val ent1 = tx.newEntity(testCollection).runSyncUnsafe()
-      val ent2 = tx.newEntity(testCollection).runSyncUnsafe()
-      tx.addStatement(testCollection, Statement(ent1, a, ent2))
-      tx.addStatement(testCollection, Statement(ent1, a, ent2))
+      for {
+        ent1 <- tx.newEntity(testCollection)
+        ent2 <- tx.newEntity(testCollection)
+        _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
+        _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
+      } yield()
     }.runSyncUnsafe()
     val res  = store.read.use { tx =>
       tx.allStatements(testCollection).map { _.statement }.toListL
