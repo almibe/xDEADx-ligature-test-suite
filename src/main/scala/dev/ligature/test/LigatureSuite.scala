@@ -64,6 +64,26 @@ abstract class LigatureSuite extends FunSuite {
     assert(res.isEmpty)
   }
 
+  test("new node test") {
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      for {
+        nn1 <- tx.newNode(testCollection)
+        nn2 <- tx.newNode(testCollection)
+        _   <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
+        nn3 <- tx.newNode(testCollection)
+        nn4 <- tx.newNode(testCollection)
+        _   <- tx.addStatement(testCollection, Statement(nn3, a, nn4))
+      } yield ()
+    }.runSyncUnsafe()
+    val res = store.read.use { tx =>
+      tx.allStatements(testCollection).toListL
+    }.runSyncUnsafe().toSet
+    assert(res.map { _.statement } == Set(
+      Statement(AnonymousNode(1), a, AnonymousNode(2)),
+      Statement(AnonymousNode(4), a, AnonymousNode(5))))
+  }
+
   test("adding statements to collections") {
     val store = createLigatureSession()
     store.write.use { tx =>
@@ -96,20 +116,6 @@ abstract class LigatureSuite extends FunSuite {
 //    }.toSet() shouldBe
 //            setOf(Statement(AnonymousNode(3), a, AnonymousNode(2)))
 //  }
-
-//        test("new node test") {
-//            val store = createLigatureSession()
-//            store.write.use { tx =>
-//                tx.addStatement(testCollection, Statement(tx.newNode(testCollection), a, tx.newNode(testCollection)))
-//                tx.addStatement(testCollection, Statement(tx.newNode(testCollection), a, tx.newNode(testCollection)))
-//            }
-//            store. compute { tx =>
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe setOf(
-//                    Statement(AnonymousNode(1), a, AnonymousNode(2)),
-//                    Statement(AnonymousNode(4), a, AnonymousNode(5)))
-//
-//        }
 //
 //        test("removing named node") {
 //            val store = createLigatureSession()
