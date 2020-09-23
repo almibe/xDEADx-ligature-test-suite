@@ -101,86 +101,35 @@ abstract class LigatureSuite extends FunSuite {
       Statement(AnonymousNode(1), a, AnonymousNode(2))))
   }
 
-//  test("removing statements from collections") {
+  test("removing statements from collections") {
+    val store = createLigatureSession()
+    store.write.use { tx =>
+      for {
+        nn1 <- tx.newNode(testCollection)
+        nn2 <- tx.newNode(testCollection)
+        nn3 <- tx.newNode(testCollection)
+        _   <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
+        _   <- tx.addStatement(testCollection, Statement(nn3, a, nn2))
+        _   <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
+        _   <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
+        _   <- tx.removeStatement(testCollection, Statement(nn2, a, nn1))
+      } yield()
+    }.runSyncUnsafe()
+    val res = store.read.use { tx =>
+      tx.allStatements(testCollection).map { _.statement }.toListL
+    }.runSyncUnsafe().toSet
+    assert(res == Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
+  }
+
+//  test("matching against a non-existant collection") {
 //    val store = createLigatureSession()
-//    store.write.use { tx =>
-//      val ent1 = tx.newNode(testCollection)
-//      val ent2 = tx.newNode(testCollection)
-//      val ent3 = tx.newNode(testCollection)
-//      tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//      tx.addStatement(testCollection, Statement(ent3, a, ent2))
-//      tx.removeStatement(testCollection, Statement(ent1, a, ent2))
-//    }.runSyncUnsafe()
 //    store.read.use { tx =>
-//      tx.allStatements(testCollection)
-//    }.toSet() shouldBe
-//            setOf(Statement(AnonymousNode(3), a, AnonymousNode(2)))
+//        tx.matchStatements(testCollection, null, null, StringLiteral("French"))
+//            .toSet() shouldBe setOf()
+//        tx.matchStatements(testCollection, null, a, null)
+//            .toSet() shouldBe setOf()
+//    }
 //  }
-//
-//        test("removing named node") {
-//            val store = createLigatureSession()
-//            store.write.use { tx =>
-//                val ent1 = NamedNode("a")
-//                val ent2 = NamedNode("b")
-//                val ent3 = NamedNode("c")
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent3, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent2, a, ent1))
-//                tx.removeNode(testCollection, ent1)
-//            }
-//            store.read.use { tx =>
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe
-//                    setOf(Statement(NamedNode("c"), a, NamedNode("b")))
-//
-//        }
-//
-//        test("removing anonymous node") {
-//            val store = createLigatureSession()
-//            store.write.use { tx =>
-//                val ent1 = tx.newNode(testCollection)
-//                val ent2 = tx.newNode(testCollection)
-//                val ent3 = tx.newNode(testCollection)
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent3, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent2, a, ent1))
-//                tx.removeNode(testCollection, ent1)
-//            }
-//            store.read.use { tx =>
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousNode(3), a, AnonymousNode(2)))
-//
-//        }
-//
-//        test("removing predicate") {
-//            val store = createLigatureSession()
-//            store.write.use { tx =>
-//                val ent1 = tx.newNode(testCollection)
-//                val ent2 = tx.newNode(testCollection)
-//                val ent3 = tx.newNode(testCollection)
-//                tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//                tx.addStatement(testCollection, Statement(ent3, Predicate("test"), ent2))
-//                tx.addStatement(testCollection, Statement(ent2, a, ent1))
-//                tx.removePredicate(testCollection, a)
-//            }
-//            store.read.use { tx =>
-//                tx.allStatements(testCollection)
-//            }.toSet() shouldBe
-//                    setOf(Statement(AnonymousNode(3), Predicate("test"), AnonymousNode(2)))
-//
-//        }
-//
-//        test("matching against a non-existant collection") {
-//            val store = createLigatureSession()
-//            store.read.use { tx =>
-//                tx.matchStatements(testCollection, null, null, StringLiteral("French"))
-//                    .toSet() shouldBe setOf()
-//                tx.matchStatements(testCollection, null, a, null)
-//                    .toSet() shouldBe setOf()
-//            }
-//
-//        }
 //
 //        test("matching statements in collections") {
 //            val store = createLigatureSession()
