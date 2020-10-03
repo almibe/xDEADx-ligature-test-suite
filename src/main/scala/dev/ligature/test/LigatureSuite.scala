@@ -17,7 +17,7 @@ abstract class LigatureSuite extends FunSuite {
   test("Create and close store") {
     val store = createLigatureSession()
     val res = store.read.use { tx =>
-      tx.collections().toListL
+      tx.collections.toListL
     }.runSyncUnsafe().toSet
     assert(res.isEmpty)
   }
@@ -28,7 +28,7 @@ abstract class LigatureSuite extends FunSuite {
       tx.createCollection(testCollection)
     }.runSyncUnsafe()
     val res = store.read.use { tx =>
-      tx.collections().toListL
+      tx.collections.toListL
     }.runSyncUnsafe().toSet
     assert(res == Set(testCollection))
   }
@@ -38,9 +38,6 @@ abstract class LigatureSuite extends FunSuite {
     store.write.use { tx =>
       tx.createCollection(testCollection)
     }.runSyncUnsafe()
-    val res = store.read.use { tx =>
-      tx.collections().toListL
-    }.runSyncUnsafe().toSet
     store.write.use { tx =>
       for {
         _ <- tx.deleteCollection(testCollection)
@@ -48,7 +45,7 @@ abstract class LigatureSuite extends FunSuite {
       } yield()
     }.runSyncUnsafe()
     val res2 = store.read.use { tx =>
-      tx.collections().toListL
+      tx.collections.toListL
     }.runSyncUnsafe()
     assert(res2.isEmpty)
   }
@@ -121,102 +118,98 @@ abstract class LigatureSuite extends FunSuite {
     assert(res == Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
   }
 
-//  test("matching against a non-existant collection") {
+//  test("matching against a non-existent collection") {
 //    val store = createLigatureSession()
-//    store.read.use { tx =>
-//        tx.matchStatements(testCollection, null, null, StringLiteral("French"))
-//            .toSet() shouldBe setOf()
-//        tx.matchStatements(testCollection, null, a, null)
-//            .toSet() shouldBe setOf()
+//    val (r1, r2) = store.read.use { tx =>
+//      for {
+//        r1 <- tx.matchStatements(testCollection, null, null, StringLiteral("French")).toListL
+//        r2 <- tx.matchStatements(testCollection, null, a, null).toListL
+//      } yield(r1, r2)
 //    }
 //  }
 //
-//        test("matching statements in collections") {
-//            val store = createLigatureSession()
-//            lateinit var valjean: Node
-//            lateinit var javert: Node
-//            store.write.use { tx =>
-//                valjean = tx.newNode(testCollection)
-//                javert = tx.newNode(testCollection)
-//                tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-//                tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-//                tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
-//            }
-//            store.read.use { tx =>
-//                tx.matchStatements(testCollection, null, null, StringLiteral("French"))
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-//                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
-//                )
-//                tx.matchStatements(testCollection, null, null, LongLiteral(24601))
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
-//                )
-//                tx.matchStatements(testCollection, valjean)
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-//                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
-//                )
-//                tx.matchStatements(testCollection, javert, Predicate("nationality"), StringLiteral("French"))
-//                        .toSet() shouldBe setOf(
-//                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
-//                )
-//                tx.matchStatements(testCollection, null, null, null)
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-//                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
-//                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
-//                )
-//            }
-//
-//        }
-//
-//        test("matching statements with literals and ranges in collections") {
-//            val store = createLigatureSession()
-//            lateinit var valjean: Node
-//            lateinit var javert: Node
-//            lateinit var trout: Node
-//            store.write.use { tx =>
-//                valjean = tx.newNode(testCollection)
-//                javert = tx.newNode(testCollection)
-//                trout = tx.newNode(testCollection)
-//                tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
-//                tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
-//                tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
-//                tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
-//                tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
-//                tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
-//            }
-//            store.read.use { tx =>
-//                tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("nationality"), StringLiteral("French")),
-//                            Statement(javert, Predicate("nationality"), StringLiteral("French"))
-//                )
-//                tx.matchStatements(testCollection, null, null, LongLiteralRange(24601, 24603))
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
-//                            Statement(javert, Predicate("prisonNumber"), LongLiteral(24602))
-//                )
-//                tx.matchStatements(testCollection, valjean, null, LongLiteralRange(24601, 24603))
-//                        .toSet() shouldBe setOf(
-//                            Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
-//                )
-//            }
-//
-//        }
-//
-////    test("matching statements with collection literals in collections") {
-////        val store = createLigatureSession()
-////        val collection = store.createCollection(NamedNode("test"))
-////        collection shouldNotBe null
-////        val tx = collection.writeTx()
-////        TODO("Add values")
-////        tx.commit()
-////        val tx = collection.tx()
-////        TODO("Add assertions")
-////        tx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
-////    }
+//  test("matching statements in collections") {
+//    val store = createLigatureSession()
+//    lateinit var valjean: Node
+//    lateinit var javert: Node
+//    store.write.use { tx =>
+//      valjean = tx.newNode(testCollection)
+//      javert = tx.newNode(testCollection)
+//      tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+//      tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+//      tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
 //    }
-//}
+//    store.read.use { tx =>
+//      tx.matchStatements(testCollection, null, null, StringLiteral("French"))
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+//                  Statement(javert, Predicate("nationality"), StringLiteral("French"))
+//      )
+//      tx.matchStatements(testCollection, null, null, LongLiteral(24601))
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
+//      )
+//      tx.matchStatements(testCollection, valjean)
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+//                  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
+//      )
+//      tx.matchStatements(testCollection, javert, Predicate("nationality"), StringLiteral("French"))
+//              .toSet() shouldBe setOf(
+//                  Statement(javert, Predicate("nationality"), StringLiteral("French"))
+//      )
+//      tx.matchStatements(testCollection, null, null, null)
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+//                  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
+//                  Statement(javert, Predicate("nationality"), StringLiteral("French"))
+//      )
+//    }
+//  }
+//
+//  test("matching statements with literals and ranges in collections") {
+//    val store = createLigatureSession()
+//    lateinit var valjean: Node
+//    lateinit var javert: Node
+//    lateinit var trout: Node
+//    store.write.use { tx =>
+//      valjean = tx.newNode(testCollection)
+//      javert = tx.newNode(testCollection)
+//      trout = tx.newNode(testCollection)
+//      tx.addStatement(testCollection, Statement(valjean, Predicate("nationality"), StringLiteral("French")))
+//      tx.addStatement(testCollection, Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)))
+//      tx.addStatement(testCollection, Statement(javert, Predicate("nationality"), StringLiteral("French")))
+//      tx.addStatement(testCollection, Statement(javert, Predicate("prisonNumber"), LongLiteral(24602)))
+//      tx.addStatement(testCollection, Statement(trout, Predicate("nationality"), StringLiteral("American")))
+//      tx.addStatement(testCollection, Statement(trout, Predicate("prisonNumber"), LongLiteral(24603)))
+//    }
+//    store.read.use { tx =>
+//      tx.matchStatements(testCollection, null, null, StringLiteralRange("French", "German"))
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("nationality"), StringLiteral("French")),
+//                  Statement(javert, Predicate("nationality"), StringLiteral("French"))
+//      )
+//      tx.matchStatements(testCollection, null, null, LongLiteralRange(24601, 24603))
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601)),
+//                  Statement(javert, Predicate("prisonNumber"), LongLiteral(24602))
+//      )
+//      tx.matchStatements(testCollection, valjean, null, LongLiteralRange(24601, 24603))
+//              .toSet() shouldBe setOf(
+//                  Statement(valjean, Predicate("prisonNumber"), LongLiteral(24601))
+//      )
+//    }
+//  }
+//
+//  test("matching statements with collection literals in collections") {
+//    val store = createLigatureSession()
+//    val collection = store.createCollection(NamedNode("test"))
+//    collection shouldNotBe null
+//    val tx = collection.writeTx()
+//    TODO("Add values")
+//    tx.commit()
+//    val tx = collection.tx()
+//    TODO("Add assertions")
+//    tx.cancel() // TODO add test running against a non-existant collection w/ match-statement calls
+//  }
 }
