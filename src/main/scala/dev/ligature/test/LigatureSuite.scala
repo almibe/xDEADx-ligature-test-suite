@@ -30,7 +30,7 @@ abstract class LigatureSuite extends FunSuite {
     val res = store.read.use { tx =>
       tx.collections.toListL
     }.runSyncUnsafe().toSet
-    assert(res == Set(testCollection))
+    assertEquals(res, Set(testCollection))
   }
 
   test("access and delete new collection") {
@@ -76,7 +76,7 @@ abstract class LigatureSuite extends FunSuite {
     val res = store.read.use { tx =>
       tx.allStatements(testCollection).toListL
     }.runSyncUnsafe().toSet
-    assert(res.map { _.statement } == Set(
+    assertEquals(res.map { _.statement }, Set(
       Statement(AnonymousNode(1), a, AnonymousNode(2)),
       Statement(AnonymousNode(4), a, AnonymousNode(5))))
   }
@@ -94,7 +94,7 @@ abstract class LigatureSuite extends FunSuite {
     val res  = store.read.use { tx =>
       tx.allStatements(testCollection).map { _.statement }.toListL
     }.runSyncUnsafe().toSet
-    assert(res == Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
+    assertEquals(res, Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
       Statement(AnonymousNode(1), a, AnonymousNode(2))))
   }
 
@@ -115,7 +115,7 @@ abstract class LigatureSuite extends FunSuite {
     val res = store.read.use { tx =>
       tx.allStatements(testCollection).map { _.statement }.toListL
     }.runSyncUnsafe().toSet
-    assert(res == Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
+    assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
   }
 
 //  test("matching against a non-existent collection") {
