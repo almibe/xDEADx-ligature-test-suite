@@ -138,7 +138,8 @@ abstract class LigatureSuite extends FunSuite {
     assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
   }
 
-//fc//yvy            tyc  yy    val res = createLigature.instance.use { instance  =>
+////  test("matching against a non-existent collection") {
+////    val res = createLigature.instance.use { instance  =>
 ////    val (r1, r2) = instance.read.use { tx =>
 ////      for {
 ////        r1 <- tx.matchStatements(testCollection, null, null, StringLiteral("French")).compile.toList
