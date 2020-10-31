@@ -14,119 +14,141 @@ abstract class LigatureSuite extends FunSuite {
   val testCollection: NamedNode = NamedNode("test")
 
   test("Create and close store") {
-    val store = createLigature.instance.use { instance  =>
-    val res = instance.read.use { tx =>
-      tx.collections.toListL
-    }.runSyncUnsafe().toSet
+    val res = createLigature.instance.use { instance  =>
+      instance.read.use { tx =>
+        tx.collections.compile.toList
+      }
+    }.unsafeRunSync()
     assert(res.isEmpty)
   }
 
-//  test("creating a new collection") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      tx.createCollection(testCollection)
-//    }.runSyncUnsafe()
-//    val res = instance.read.use { tx =>
-//      tx.collections.toListL
-//    }.runSyncUnsafe().toSet
-//    assertEquals(res, Set(testCollection))
-//  }
-//
-//  test("access and delete new collection") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      tx.createCollection(testCollection)
-//    }.runSyncUnsafe()
-//    instance.write.use { tx =>
-//      for {
-//        _ <- tx.deleteCollection(testCollection)
-//        _ <- tx.deleteCollection(NamedNode("test2"))
-//      } yield()
-//    }.runSyncUnsafe()
-//    val res2 = instance.read.use { tx =>
-//      tx.collections.toListL
-//    }.runSyncUnsafe()
-//    assert(res2.isEmpty)
-//  }
-//
-//  test("new collections should be empty") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      tx.createCollection(testCollection)
-//    }.runSyncUnsafe()
-//    val res = instance.read.use { tx =>
-//      tx.allStatements(testCollection).toListL
-//    }.runSyncUnsafe().toSet
-//    assert(res.isEmpty)
-//  }
-//
-//  test("new node test") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      for {
-//        nn1 <- tx.newNode(testCollection)
-//        nn2 <- tx.newNode(testCollection)
-//        _   <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
-//        nn3 <- tx.newNode(testCollection)
-//        nn4 <- tx.newNode(testCollection)
-//        _   <- tx.addStatement(testCollection, Statement(nn3, a, nn4))
-//      } yield ()
-//    }.runSyncUnsafe()
-//    val res = instance.read.use { tx =>
-//      tx.allStatements(testCollection).toListL
-//    }.runSyncUnsafe().toSet
-//    assertEquals(res.map { _.statement }, Set(
-//      Statement(AnonymousNode(1), a, AnonymousNode(2)),
-//      Statement(AnonymousNode(4), a, AnonymousNode(5))))
-//  }
-//
-//  test("adding statements to collections") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      for {
-//        ent1 <- tx.newNode(testCollection)
-//        ent2 <- tx.newNode(testCollection)
-//        _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//        _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
-//      } yield()
-//    }.runSyncUnsafe()
-//    val res  = instance.read.use { tx =>
-//      tx.allStatements(testCollection).map { _.statement }.toListL
-//    }.runSyncUnsafe().toSet
-//    assertEquals(res, Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
-//      Statement(AnonymousNode(1), a, AnonymousNode(2))))
-//  }
-//
-//  test("removing statements from collections") {
-//    val store = createLigature.instance.use { instance  =>
-//    instance.write.use { tx =>
-//      for {
-//        nn1 <- tx.newNode(testCollection)
-//        nn2 <- tx.newNode(testCollection)
-//        nn3 <- tx.newNode(testCollection)
-//        _   <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
-//        _   <- tx.addStatement(testCollection, Statement(nn3, a, nn2))
-//        _   <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
-//        _   <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
-//        _   <- tx.removeStatement(testCollection, Statement(nn2, a, nn1))
-//      } yield()
-//    }.runSyncUnsafe()
-//    val res = instance.read.use { tx =>
-//      tx.allStatements(testCollection).map { _.statement }.toListL
-//    }.runSyncUnsafe().toSet
-//    assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
-//  }
-//fc//yvy            tyc  yy    val store = createLigature.instance.use { instance  =>
+  test("creating a new collection") {
+    val res = createLigature.instance.use { instance =>
+      for {
+        _ <- instance.write.use { tx =>
+          tx.createCollection(testCollection)
+        }
+        res <- instance.read.use { tx =>
+          tx.collections.compile.toList
+        }
+      } yield res
+    }.unsafeRunSync().toSet
+    assertEquals(res, Set(testCollection))
+  }
+
+  test("access and delete new collection") {
+    val res = createLigature.instance.use { instance  =>
+      for {
+        _ <- instance.write.use { tx =>
+          tx.createCollection(testCollection)
+        }
+        _ <- instance.write.use { tx =>
+          for {
+            _ <- tx.deleteCollection(testCollection)
+            _ <- tx.deleteCollection(NamedNode("test2"))
+          } yield ()
+        }
+        res <- instance.read.use { tx =>
+           tx.collections.compile.toList
+         }
+      } yield res
+    }.unsafeRunSync()
+    assert(res.isEmpty)
+  }
+
+  test("new collections should be empty") {
+    val res = createLigature.instance.use { instance  =>
+      for {
+        _ <- instance.write.use { tx =>
+          tx.createCollection(testCollection)
+        }
+        res <- instance.read.use { tx =>
+          tx.allStatements(testCollection).compile.toList
+        }
+      } yield res
+    }.unsafeRunSync()
+    assert(res.isEmpty)
+  }
+
+  test("new node test") {
+    val res = createLigature.instance.use { instance  =>
+      for {
+        _ <- instance.write.use { tx =>
+          for {
+            nn1 <- tx.newNode(testCollection)
+            nn2 <- tx.newNode(testCollection)
+            _   <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
+            nn3 <- tx.newNode(testCollection)
+            nn4 <- tx.newNode(testCollection)
+            _   <- tx.addStatement(testCollection, Statement(nn3, a, nn4))
+          } yield ()
+        }
+        res <- instance.read.use { tx =>
+          tx.allStatements(testCollection).compile.toList
+        }
+      } yield res
+    }.unsafeRunSync().toSet
+    assertEquals(res.map { _.statement }, Set(
+      Statement(AnonymousNode(1), a, AnonymousNode(2)),
+      Statement(AnonymousNode(4), a, AnonymousNode(5))))
+  }
+
+  test("adding statements to collections") {
+    val res = createLigature.instance.use { instance  =>
+      for {
+        _ <- instance.write.use { tx =>
+          for {
+            ent1 <- tx.newNode(testCollection)
+            ent2 <- tx.newNode(testCollection)
+            _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
+            _    <- tx.addStatement(testCollection, Statement(ent1, a, ent2))
+          } yield()
+        }
+        res  <- instance.read.use { tx =>
+          tx.allStatements(testCollection).map { _.statement }.compile.toList
+        }
+      } yield res
+    }.unsafeRunSync().toSet
+    assertEquals(res, Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
+      Statement(AnonymousNode(1), a, AnonymousNode(2))))
+  }
+
+  test("removing statements from collections") {
+    val res = createLigature.instance.use { instance =>
+      for {
+        _ <- instance.write.use { tx =>
+          for {
+            nn1 <- tx.newNode(testCollection)
+            nn2 <- tx.newNode(testCollection)
+            nn3 <- tx.newNode(testCollection)
+            _ <- tx.addStatement(testCollection, Statement(nn1, a, nn2))
+            _ <- tx.addStatement(testCollection, Statement(nn3, a, nn2))
+            _ <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
+            _ <- tx.removeStatement(testCollection, Statement(nn1, a, nn2))
+            _ <- tx.removeStatement(testCollection, Statement(nn2, a, nn1))
+          } yield ()
+        }
+        res <- instance.read.use { tx =>
+          tx.allStatements(testCollection).map {
+            _.statement
+          }.compile.toList
+        }
+      } yield res
+    }.unsafeRunSync().toSet
+    assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
+  }
+
+//fc//yvy            tyc  yy    val res = createLigature.instance.use { instance  =>
 ////    val (r1, r2) = instance.read.use { tx =>
 ////      for {
-////        r1 <- tx.matchStatements(testCollection, null, null, StringLiteral("French")).toListL
-////        r2 <- tx.matchStatements(testCollection, null, a, null).toListL
+////        r1 <- tx.matchStatements(testCollection, null, null, StringLiteral("French")).compile.toList
+////        r2 <- tx.matchStatements(testCollection, null, a, null).compile.toList
 ////      } yield(r1, r2)
 ////    }
 ////  }
 ////
 ////  test("matching statements in collections") {
-////    val store = createLigature.instance.use { instance  =>
+////    val res = createLigature.instance.use { instance  =>
 ////    lateinit var valjean: Node
 ////    lateinit var javert: Node
 ////    instance.write.use { tx =>
@@ -165,7 +187,7 @@ abstract class LigatureSuite extends FunSuite {
 ////  }
 ////
 ////  test("matching statements with literals and ranges in collections") {
-////    val store = createLigature.instance.use { instance  =>
+////    val res = createLigature.instance.use { instance  =>
 ////    lateinit var valjean: Node
 ////    lateinit var javert: Node
 ////    lateinit var trout: Node
@@ -199,7 +221,7 @@ abstract class LigatureSuite extends FunSuite {
 ////  }
 ////
 ////  test("matching statements with collection literals in collections") {
-////    val store = createLigature.instance.use { instance  =>
+////    val res = createLigature.instance.use { instance  =>
 ////    val collection = store.createCollection(NamedNode("test"))
 ////    collection shouldNotBe null
 ////    val tx = collection.writeTx()
