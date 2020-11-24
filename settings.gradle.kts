@@ -1,1 +1,1 @@
-rootProject.name = "ligature"
+rootProject.name = "ligature-test-suite"

@@ -15,7 +15,7 @@ repositories {
 dependencies {
     // Align versions of all Kotlin components
     implementation("dev.ligature:ligature:0.1.0-SNAPSHOT")
-    testImplementation("io.kotest:kotest-runner-junit5:4.3.1")
+    implementation("io.kotest:kotest-runner-junit5:4.3.1")
 }
 
 tasks.withType<Test> {
