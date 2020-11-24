@@ -7,6 +7,7 @@ package dev.ligature.test
 import dev.ligature._
 import dev.ligature.Ligature.a
 import munit._
+import monix.execution.Scheduler.Implicits.global
 
 abstract class LigatureSuite extends FunSuite {
   def createLigature: Ligature
@@ -16,9 +17,9 @@ abstract class LigatureSuite extends FunSuite {
   test("Create and close store") {
     val res = createLigature.instance.use { instance  =>
       instance.read.use { tx =>
-        tx.datasets.compile.toList
+        tx.datasets.toListL
       }
-    }.unsafeRunSync()
+    }.runSyncUnsafe()
     assert(res.isEmpty)
   }
 
@@ -29,10 +30,10 @@ abstract class LigatureSuite extends FunSuite {
           tx.createDataset(testDataset)
         }
         res <- instance.read.use { tx =>
-          tx.datasets.compile.toList
+          tx.datasets.toListL
         }
       } yield res
-    }.unsafeRunSync().toSet
+    }.runSyncUnsafe().toSet
     assertEquals(res, Set(testDataset))
   }
 
@@ -49,10 +50,10 @@ abstract class LigatureSuite extends FunSuite {
           } yield ()
         }
         res <- instance.read.use { tx =>
-           tx.datasets.compile.toList
+           tx.datasets.toListL
          }
       } yield res
-    }.unsafeRunSync()
+    }.runSyncUnsafe()
     assert(res.isEmpty)
   }
 
@@ -63,10 +64,10 @@ abstract class LigatureSuite extends FunSuite {
           tx.createDataset(testDataset)
         }
         res <- instance.read.use { tx =>
-          tx.allStatements(testDataset).compile.toList
+          tx.allStatements(testDataset).toListL
         }
       } yield res
-    }.unsafeRunSync()
+    }.runSyncUnsafe()
     assert(res.isEmpty)
   }
 
@@ -84,10 +85,10 @@ abstract class LigatureSuite extends FunSuite {
           } yield ()
         }
         res <- instance.read.use { tx =>
-          tx.allStatements(testDataset).compile.toList
+          tx.allStatements(testDataset).toListL
         }
       } yield res
-    }.unsafeRunSync().toSet
+    }.runSyncUnsafe().toSet
     assertEquals(res.map { _.statement }, Set(
       Statement(AnonymousNode(1), a, AnonymousNode(2)),
       Statement(AnonymousNode(4), a, AnonymousNode(5))))
@@ -105,10 +106,10 @@ abstract class LigatureSuite extends FunSuite {
           } yield()
         }
         res  <- instance.read.use { tx =>
-          tx.allStatements(testDataset).map { _.statement }.compile.toList
+          tx.allStatements(testDataset).map { _.statement }.toListL
         }
       } yield res
-    }.unsafeRunSync().toSet
+    }.runSyncUnsafe().toSet
     assertEquals(res, Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
       Statement(AnonymousNode(1), a, AnonymousNode(2))))
   }
@@ -131,10 +132,10 @@ abstract class LigatureSuite extends FunSuite {
         res <- instance.read.use { tx =>
           tx.allStatements(testDataset).map {
             _.statement
-          }.compile.toList
+          }.toListL
         }
       } yield res
-    }.unsafeRunSync().toSet
+    }.runSyncUnsafe().toSet
     assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
   }
 
@@ -142,8 +143,8 @@ abstract class LigatureSuite extends FunSuite {
 ////    val res = createLigature.instance.use { instance  =>
 ////    val (r1, r2) = instance.read.use { tx =>
 ////      for {
-////        r1 <- tx.matchStatements(testDataset, null, null, StringLiteral("French")).compile.toList
-////        r2 <- tx.matchStatements(testDataset, null, a, null).compile.toList
+////        r1 <- tx.matchStatements(testDataset, null, null, StringLiteral("French")).toListL
+////        r2 <- tx.matchStatements(testDataset, null, a, null).toListL
 ////      } yield(r1, r2)
 ////    }
 ////  }
