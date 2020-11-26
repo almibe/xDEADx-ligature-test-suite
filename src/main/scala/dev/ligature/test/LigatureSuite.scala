@@ -12,7 +12,7 @@ import monix.execution.Scheduler.Implicits.global
 abstract class LigatureSuite extends FunSuite {
   def createLigature: Ligature
 
-  val testDataset: Dataset = Dataset("test")
+  val testDataset: NamedNode = NamedNode("test")
 
   test("Create and close store") {
     val res = createLigature.instance.use { instance  =>
@@ -46,7 +46,7 @@ abstract class LigatureSuite extends FunSuite {
         _ <- instance.write.use { tx =>
           for {
             _ <- tx.deleteDataset(testDataset)
-            _ <- tx.deleteDataset(Dataset("test2"))
+            _ <- tx.deleteDataset(NamedNode("test2"))
           } yield ()
         }
         res <- instance.read.use { tx =>
