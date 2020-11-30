@@ -6,13 +6,14 @@ package dev.ligature.test
 
 import dev.ligature._
 import dev.ligature.Ligature.a
+import dev.ligature.iris.IRI
 import munit._
 import monix.execution.Scheduler.Implicits.global
 
 abstract class LigatureSuite extends FunSuite {
   def createLigature: Ligature
 
-  val testDataset: NamedNode = NamedNode("test")
+  val testDataset: IRI = IRI("http://localhost/test")
 
   test("Create and close store") {
     val res = createLigature.instance.use { instance  =>
@@ -46,7 +47,7 @@ abstract class LigatureSuite extends FunSuite {
         _ <- instance.write.use { tx =>
           for {
             _ <- tx.deleteDataset(testDataset)
-            _ <- tx.deleteDataset(NamedNode("test2"))
+            _ <- tx.deleteDataset(IRI("http://localhost/test2"))
           } yield ()
         }
         res <- instance.read.use { tx =>
@@ -90,8 +91,8 @@ abstract class LigatureSuite extends FunSuite {
       } yield res
     }.runSyncUnsafe().toSet
     assertEquals(res.map { _.statement }, Set(
-      Statement(AnonymousNode(1), a, AnonymousNode(2)),
-      Statement(AnonymousNode(4), a, AnonymousNode(5))))
+      Statement(BlankNode(1), a, BlankNode(2)),
+      Statement(BlankNode(4), a, BlankNode(5))))
   }
 
   test("adding statements to datasets") {
@@ -110,8 +111,8 @@ abstract class LigatureSuite extends FunSuite {
         }
       } yield res
     }.runSyncUnsafe().toSet
-    assertEquals(res, Set(Statement(AnonymousNode(1), a, AnonymousNode(2)),
-      Statement(AnonymousNode(1), a, AnonymousNode(2))))
+    assertEquals(res, Set(Statement(BlankNode(1), a, BlankNode(2)),
+      Statement(BlankNode(1), a, BlankNode(2))))
   }
 
   test("removing statements from datasets") {
@@ -136,7 +137,7 @@ abstract class LigatureSuite extends FunSuite {
         }
       } yield res
     }.runSyncUnsafe().toSet
-    assertEquals(res, Set(Statement(AnonymousNode(3), a, AnonymousNode(2))))
+    assertEquals(res, Set(Statement(BlankNode(3), a, BlankNode(2))))
   }
 
 ////  test("matching against a non-existent dataset") {
